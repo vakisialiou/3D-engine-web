@@ -65,14 +65,14 @@ class Engine {
         this.dirLightHeper = new DirectionalLightHelper(this.dirLight, 10)
         this.scene.add(this.dirLightHeper)
 
-        const geometry = new BoxBufferGeometry(10, 10, 10)
-        const material = new MeshBasicMaterial({ color: 0x000000 })
-        const mesh = new Mesh(geometry, material)
-        mesh.position.y = 15;
-        mesh.rotation.y = - 1;
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
-        this.scene.add(mesh)
+        // const geometry = new BoxBufferGeometry(10, 10, 10)
+        // const material = new MeshBasicMaterial({ color: 0x000000 })
+        // const mesh = new Mesh(geometry, material)
+        // mesh.position.y = 15;
+        // mesh.rotation.y = - 1;
+        // mesh.castShadow = true;
+        // mesh.receiveShadow = true;
+        // this.scene.add(mesh)
 
         // GROUND
         const groundGeo = new PlaneBufferGeometry(10000, 10000)
@@ -94,10 +94,9 @@ class Engine {
 
             const mesh = gltf.scene.children[0]
 
-            const s = 0.35
+            const s = 0.25
             mesh.scale.set(s, s, s)
             mesh.position.y = -33
-
             mesh.castShadow = true
             mesh.receiveShadow = true
             this.scene.add(mesh)
