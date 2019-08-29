@@ -18,8 +18,9 @@ import {
     HemisphereLightHelper,
     DirectionalLightHelper, Geometry
 } from 'three'
+import SkyDome from './SkyDome'
 
-class Ini {
+class Engine {
     constructor() {
         this.clock = new Clock()
 
@@ -85,60 +86,14 @@ class Ini {
         this.scene.add(ground)
 
         // SKYDOME
-        const vertexShader = `
-        
-            varying vec3 vWorldPosition;
-            
-			void main() {
-			
-				vec4 worldPosition = modelMatrix * vec4( position, 1.0 );
-				vWorldPosition = worldPosition.xyz;
-				
-				gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-			}
-			
-        `
-        const fragmentShader = `
-        
-            uniform vec3 topColor;
-			uniform vec3 bottomColor;
-			uniform float offset;
-			uniform float exponent;
-			
-			varying vec3 vWorldPosition;
-			
-			void main() {
-			
-				float h = normalize( vWorldPosition + offset ).y;
-				gl_FragColor = vec4( mix( bottomColor, topColor, max( pow( max( h , 0.0), exponent ), 0.0 ) ), 1.0 );
-			}
-			
-        `
-        const uniforms = {
-            topColor: { value: new Color(0x0077ff) },
-            bottomColor: { value: new Color(0xffffff) },
-            offset: { value: 33 },
-            exponent: { value: 0.6 }
-        }
-        uniforms['topColor'].value.copy(this.hemiLight.color)
-        this.scene.fog.color.copy(uniforms['bottomColor'].value)
-
-        const skyGeo = new SphereBufferGeometry(4000, 32, 15)
-        const skyMat = new ShaderMaterial({
-            uniforms: uniforms,
-            vertexShader: vertexShader,
-            fragmentShader: fragmentShader,
-            side: BackSide
-        })
-
-        const sky = new Mesh(skyGeo, skyMat)
+        const sky = new SkyDome()
         this.scene.add(sky)
     }
 
     /**
      *
      * @param {Element} container
-     * @returns {Ini}
+     * @returns {Engine}
      */
     render(container) {
         this.renderer.setPixelRatio(window.devicePixelRatio)
@@ -156,7 +111,7 @@ class Ini {
 
     /**
      *
-     * @returns {Ini}
+     * @returns {Engine}
      */
     animate() {
         requestAnimationFrame(() => this.animate)
@@ -171,4 +126,4 @@ class Ini {
     }
 }
 
-export default Ini
+export default Engine

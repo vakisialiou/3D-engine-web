@@ -1,14 +1,20 @@
 <template>
-  <div class="hello">
-    <h1>{{ msg }}</h1>
-  </div>
+  <div class="logo">{{ msg }}</div>
 </template>
 
 <script>
 export default {
-  name: 'HelloWorld',
+  name: 'Logo',
   props: {
     msg: String
   }
 }
 </script>
+
+<style>
+  .logo {
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+</style>
