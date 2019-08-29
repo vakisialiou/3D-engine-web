@@ -4,9 +4,7 @@ import {
     Color,
     Clock,
     Scene,
-    BackSide,
     WebGLRenderer,
-    ShaderMaterial,
     HemisphereLight,
     DirectionalLight,
     PerspectiveCamera,
@@ -14,9 +12,8 @@ import {
     BoxBufferGeometry,
     PlaneBufferGeometry,
     MeshLambertMaterial,
-    SphereBufferGeometry,
     HemisphereLightHelper,
-    DirectionalLightHelper, Geometry
+    DirectionalLightHelper
 } from 'three'
 import SkyDome from './SkyDome'
 

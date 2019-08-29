@@ -1,9 +1,7 @@
-const webpack = require('webpack');
 
 module.exports = {
+    outputDir: '../server/build',
     configureWebpack: {
-        plugins: [
 
-        ]
     }
 }
