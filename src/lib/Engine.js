@@ -5,6 +5,7 @@ import {
     Clock,
     Scene,
     WebGLRenderer,
+    AnimationMixer,
     HemisphereLight,
     DirectionalLight,
     PerspectiveCamera,
@@ -16,6 +17,7 @@ import {
     DirectionalLightHelper
 } from 'three'
 import SkyDome from './SkyDome'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
 class Engine {
     constructor() {
@@ -85,6 +87,24 @@ class Engine {
         // SKYDOME
         const sky = new SkyDome()
         this.scene.add(sky)
+
+        this.mixers = []
+        const loader = new GLTFLoader()
+        loader.load('models/Soldier.glb', (gltf) => {
+
+            const mesh = gltf.scene.children[0]
+
+            const s = 0.35
+            mesh.scale.set(s, s, s)
+            mesh.position.y = -33
+
+            mesh.castShadow = true
+            mesh.receiveShadow = true
+            this.scene.add(mesh)
+            const mixer = new AnimationMixer(mesh)
+            mixer.clipAction(gltf.animations[0]).setDuration(1).play()
+            this.mixers.push(mixer)
+        } );
     }
 
     /**
@@ -111,7 +131,13 @@ class Engine {
      * @returns {Engine}
      */
     animate() {
-        requestAnimationFrame(() => this.animate)
+        requestAnimationFrame(() => this.animate())
+
+        const delta = this.clock.getDelta()
+        for (let i = 0; i < this.mixers.length; i ++) {
+            this.mixers[i].update(delta)
+        }
+
         this.renderer.render(this.scene, this.camera)
         return this
     }
