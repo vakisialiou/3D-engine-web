@@ -1,9 +1,11 @@
-import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls'
+// import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls'
+import { PointerLockControls } from './PointerLockControls'
 import { Vector3 } from 'three'
 
 class PersonControls extends PointerLockControls {
-    constructor(camera, domElement) {
-        super(camera, domElement)
+    constructor(object, camera, domElement) {
+        super(object, camera, domElement)
+
 
         this.velocity = new Vector3()
         this.direction = new Vector3()

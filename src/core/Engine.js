@@ -90,7 +90,7 @@ class Engine {
         this.scene.add(sky)
 
 
-        const euler = new Euler( 0, 0, 0, 'YXZ' );
+        // const euler = new Euler( 0, 0, 0, 'YXZ' );
 
         this.mixers = []
         const loader = new GLTFLoader()
@@ -103,31 +103,31 @@ class Engine {
             mesh.position.y = -33
             mesh.castShadow = true
             mesh.receiveShadow = true
-            this.scene.add(mesh)
+            // this.scene.add(mesh)
             const mixer = new AnimationMixer(mesh)
-            mixer.clipAction(gltf.animations[0]).setDuration(0.6).play()
+            mixer.clipAction(gltf.animations[3]).setDuration(0.6).play()
             this.mixers.push(mixer)
 
-            this.updates.push({update: () => {
-
-                const camera = this.controls.getObject()
-                mesh.rotation.z = Math.atan2( ( camera.position.x - mesh.position.x ), ( camera.position.z - mesh.position.z ) );
-
-                    // mesh.quaternion.setFromEuler( this.controls.getObject().rotation );
-                    // mesh.rotation.setFromQuaternion(this.camera.quaternion)
-                    // mesh.rotation.z = this.camera.rotation.z
-                    // mesh.rotation.copy(this.camera.rotation)
-
-            }})
+            // this.updates.push({update: () => {
+            //     const camera = this.controls.getObject()
+            //     mesh.rotation.z = Math.atan2( ( camera.position.x - mesh.position.x ), ( camera.position.z - mesh.position.z ) );
+            // }})
 
 
 
-            console.log(mesh, this.camera)
+            // console.log(mesh, this.camera)
+
+            this.controls = new PersonControls(mesh, this.camera, this.renderer.domElement)
+            this.updates.push(this.controls)
+
+
+
+            this.scene.add(this.controls.getObject())
         })
 
-        this.controls = new PersonControls(this.camera, this.renderer.domElement)
-        this.updates.push(this.controls)
-        this.scene.add(this.controls.getObject())
+        // this.controls = new PersonControls(this.camera, this.renderer.domElement)
+        // this.updates.push(this.controls)
+        // this.scene.add(this.controls.getObject())
     }
 
     /**
