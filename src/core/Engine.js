@@ -9,18 +9,19 @@ import {
     HemisphereLight,
     DirectionalLight,
     PerspectiveCamera,
-    MeshBasicMaterial,
-    BoxBufferGeometry,
     PlaneBufferGeometry,
     MeshLambertMaterial,
     HemisphereLightHelper,
-    DirectionalLightHelper
+    DirectionalLightHelper, Euler
 } from 'three'
 import SkyDome from './SkyDome'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
+import PersonControls from './Controls/PersonControls'
 
 class Engine {
     constructor() {
+        this.updates = []
+
         this.clock = new Clock()
 
         this.scene = new Scene()
@@ -31,7 +32,7 @@ class Engine {
             antialias: true
         })
 
-        this.camera.position.set(0, 0, 250)
+        this.camera.position.set(0, 30, 250)
 
         this.scene.background = new Color().setHSL(0.6, 0, 1)
         this.scene.fog = new Fog(this.scene.background, 1, 5000)
@@ -88,22 +89,45 @@ class Engine {
         const sky = new SkyDome()
         this.scene.add(sky)
 
+
+        const euler = new Euler( 0, 0, 0, 'YXZ' );
+
         this.mixers = []
         const loader = new GLTFLoader()
         loader.load('models/Soldier.glb', (gltf) => {
 
             const mesh = gltf.scene.children[0]
 
-            const s = 0.25
+            const s = 0.20
             mesh.scale.set(s, s, s)
             mesh.position.y = -33
             mesh.castShadow = true
             mesh.receiveShadow = true
             this.scene.add(mesh)
             const mixer = new AnimationMixer(mesh)
-            mixer.clipAction(gltf.animations[0]).setDuration(1).play()
+            mixer.clipAction(gltf.animations[0]).setDuration(0.6).play()
             this.mixers.push(mixer)
-        } );
+
+            this.updates.push({update: () => {
+
+                const camera = this.controls.getObject()
+                mesh.rotation.z = Math.atan2( ( camera.position.x - mesh.position.x ), ( camera.position.z - mesh.position.z ) );
+
+                    // mesh.quaternion.setFromEuler( this.controls.getObject().rotation );
+                    // mesh.rotation.setFromQuaternion(this.camera.quaternion)
+                    // mesh.rotation.z = this.camera.rotation.z
+                    // mesh.rotation.copy(this.camera.rotation)
+
+            }})
+
+
+
+            console.log(mesh, this.camera)
+        })
+
+        this.controls = new PersonControls(this.camera, this.renderer.domElement)
+        this.updates.push(this.controls)
+        this.scene.add(this.controls.getObject())
     }
 
     /**
@@ -133,6 +157,12 @@ class Engine {
         requestAnimationFrame(() => this.animate())
 
         const delta = this.clock.getDelta()
+
+        for (const item of this.updates) {
+            item.update(delta)
+        }
+
+
         for (let i = 0; i < this.mixers.length; i ++) {
             this.mixers[i].update(delta)
         }
