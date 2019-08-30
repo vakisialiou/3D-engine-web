@@ -1,18 +1,13 @@
 import {
     Euler,
     EventDispatcher,
-    Vector3,
-    Group
+    Vector3
 } from "three/build/three.module.js";
 
 var PointerLockControls = function ( object, camera, domElement ) {
 
     this.domElement = domElement || document.body;
     this.isLocked = false;
-
-    var group = new Group()
-    group.add(object)
-    group.add(camera)
 
     //
     // internals
@@ -24,7 +19,6 @@ var PointerLockControls = function ( object, camera, domElement ) {
     var lockEvent = { type: 'lock' };
     var unlockEvent = { type: 'unlock' };
 
-    var eulerObject = new Euler( 0, 0, 0, 'YXZ' );
     var eulerCamera = new Euler( 0, 0, 0, 'YXZ' );
 
     var PI_2 = Math.PI / 2;
@@ -38,16 +32,11 @@ var PointerLockControls = function ( object, camera, domElement ) {
         var movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
         var movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
 
-        eulerObject.setFromQuaternion( object.quaternion );
+        eulerCamera.setFromQuaternion( camera.quaternion );
 
-        eulerObject.y -= movementX * 0.002;
-
-        // eulerCamera.y -= movementX * 0.002;
+        eulerCamera.y -= movementX * 0.002;
         eulerCamera.x -= movementY * 0.002;
         eulerCamera.x = Math.max( - PI_2, Math.min( PI_2, eulerCamera.x ) );
-
-        object.quaternion.setFromEuler( eulerObject );
-
 
         camera.quaternion.setFromEuler( eulerCamera );
 
@@ -103,7 +92,7 @@ var PointerLockControls = function ( object, camera, domElement ) {
 
     this.getObject = function () { // retaining this method for backward compatibility
 
-        return group;
+        return camera;
 
     };
 
@@ -113,7 +102,7 @@ var PointerLockControls = function ( object, camera, domElement ) {
 
         return function ( v ) {
 
-            return v.copy( direction ).applyQuaternion( object.quaternion );
+            return v.copy( direction ).applyQuaternion( camera.quaternion );
 
         };
 
@@ -122,21 +111,21 @@ var PointerLockControls = function ( object, camera, domElement ) {
     this.moveForward = function ( distance ) {
 
         // move forward parallel to the xz-plane
-        // assumes object.up is y-up
+        // assumes camera.up is y-up
 
-        vec.setFromMatrixColumn( group.matrix, 0 );
+        vec.setFromMatrixColumn( camera.matrix, 0 );
 
-        vec.crossVectors( group.up, vec );
+        vec.crossVectors( camera.up, vec );
 
-        group.position.addScaledVector( vec, distance );
+        camera.position.addScaledVector( vec, distance );
 
     };
 
     this.moveRight = function ( distance ) {
 
-        vec.setFromMatrixColumn( group.matrix, 0 );
+        vec.setFromMatrixColumn( camera.matrix, 0 );
 
-        group.position.addScaledVector( vec, distance );
+        camera.position.addScaledVector( vec, distance );
 
     };
 

@@ -4,15 +4,25 @@ import {
     Color,
     Clock,
     Scene,
+    Vector2,
+    Vector3,
+    Vector4,
+    Object3D,
+    ArrayCamera,
     WebGLRenderer,
+    TextureLoader,
     AnimationMixer,
     HemisphereLight,
     DirectionalLight,
     PerspectiveCamera,
+    OrthographicCamera,
+    MeshBasicMaterial,
+    BoxBufferGeometry,
     PlaneBufferGeometry,
     MeshLambertMaterial,
     HemisphereLightHelper,
-    DirectionalLightHelper, Euler
+    DirectionalLightHelper,
+    Euler,DataTexture, RGBFormat, NearestFilter, SpriteMaterial, Sprite
 } from 'three'
 import SkyDome from './SkyDome'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
@@ -25,14 +35,22 @@ class Engine {
         this.clock = new Clock()
 
         this.scene = new Scene()
+        this.sceneOrtho = new Scene()
 
-        this.camera = new PerspectiveCamera(30, window.innerWidth / window.innerHeight, 1, 5000)
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+
+        this.camera = new PerspectiveCamera(30, width / height, 1, 5000)
+        this.camera.position.set(0, 30, 250)
+
+        this.camera2 = new PerspectiveCamera( 70, 1, 1, 1000 );
+        this.camera2.position.set(0, 20, -70);
+        this.camera2.lookAt(new Vector3())
+
 
         this.renderer = new WebGLRenderer({
             antialias: true
         })
-
-        this.camera.position.set(0, 30, 250)
 
         this.scene.background = new Color().setHSL(0.6, 0, 1)
         this.scene.fog = new Fog(this.scene.background, 1, 5000)
@@ -66,14 +84,29 @@ class Engine {
         this.dirLightHeper = new DirectionalLightHelper(this.dirLight, 10)
         this.scene.add(this.dirLightHeper)
 
-        // const geometry = new BoxBufferGeometry(10, 10, 10)
-        // const material = new MeshBasicMaterial({ color: 0x000000 })
-        // const mesh = new Mesh(geometry, material)
-        // mesh.position.y = 15;
-        // mesh.rotation.y = - 1;
-        // mesh.castShadow = true;
-        // mesh.receiveShadow = true;
-        // this.scene.add(mesh)
+
+
+        const texture1 = new TextureLoader().load( 'textures/stone-gray.jpg')
+        const geometry1 = new BoxBufferGeometry(50, 50, 50);
+        const material1 = new MeshBasicMaterial({ map: texture1 })
+        const mesh1 = new Mesh(geometry1, material1)
+        mesh1.position.set(40, -10, -80);
+        this.scene.add(mesh1)
+
+        const texture2 = new TextureLoader().load( 'textures/stone-clean.jpg')
+        const geometry2 = new BoxBufferGeometry(50, 50, 50);
+        const material2 = new MeshBasicMaterial({ map: texture2 })
+        const mesh2 = new Mesh(geometry2, material2)
+        mesh2.position.set(50, -10, -180);
+        this.scene.add(mesh2)
+
+        const texture3 = new TextureLoader().load( 'textures/stone-wall.jpg')
+        const geometry3 = new BoxBufferGeometry(50, 50, 50);
+        const material3 = new MeshBasicMaterial({ map: texture3 })
+        const mesh3 = new Mesh(geometry3, material3)
+        mesh3.position.set(-50, -10, 180);
+        this.scene.add(mesh3)
+
 
         // GROUND
         const groundGeo = new PlaneBufferGeometry(10000, 10000)
@@ -89,45 +122,46 @@ class Engine {
         const sky = new SkyDome()
         this.scene.add(sky)
 
-
-        // const euler = new Euler( 0, 0, 0, 'YXZ' );
-
         this.mixers = []
         const loader = new GLTFLoader()
         loader.load('models/Soldier.glb', (gltf) => {
 
             const mesh = gltf.scene.children[0]
-
             const s = 0.20
             mesh.scale.set(s, s, s)
-            mesh.position.y = -33
+            mesh.position.y = - 33
+            mesh.position.z = 10
             mesh.castShadow = true
             mesh.receiveShadow = true
-            // this.scene.add(mesh)
+
+            this.scene.add(mesh)
+
             const mixer = new AnimationMixer(mesh)
-            mixer.clipAction(gltf.animations[3]).setDuration(0.6).play()
+            mixer.clipAction(gltf.animations[1]).setDuration(1).play()
             this.mixers.push(mixer)
-
-            // this.updates.push({update: () => {
-            //     const camera = this.controls.getObject()
-            //     mesh.rotation.z = Math.atan2( ( camera.position.x - mesh.position.x ), ( camera.position.z - mesh.position.z ) );
-            // }})
-
-
-
-            // console.log(mesh, this.camera)
 
             this.controls = new PersonControls(mesh, this.camera, this.renderer.domElement)
             this.updates.push(this.controls)
 
 
-
+            this.controls.getObject().add(mesh)
             this.scene.add(this.controls.getObject())
         })
 
-        // this.controls = new PersonControls(this.camera, this.renderer.domElement)
-        // this.updates.push(this.controls)
-        // this.scene.add(this.controls.getObject())
+        loader.load('models/Soldier.glb', (gltf) => {
+            const mesh = gltf.scene.children[0]
+            const s = 0.20
+            mesh.scale.set(s, s, s)
+            mesh.position.set(0, -33, 0)
+            mesh.castShadow = true
+            mesh.receiveShadow = true
+
+            this.scene.add(mesh)
+
+            const mixer = new AnimationMixer(mesh)
+            mixer.clipAction(gltf.animations[3]).setDuration(1).play()
+            this.mixers.push(mixer)
+        })
     }
 
     /**
@@ -162,19 +196,51 @@ class Engine {
             item.update(delta)
         }
 
-
         for (let i = 0; i < this.mixers.length; i ++) {
             this.mixers[i].update(delta)
         }
 
+        let windowWidth = window.innerWidth;
+        let windowHeight = window.innerHeight;
+
+        let left = Math.floor( 0 );
+        let bottom = Math.floor( 0 );
+        let width = Math.floor( windowWidth );
+        let height = Math.floor( windowHeight );
+
+        this.renderer.setViewport( left, bottom, width, height );
+        this.renderer.setScissor( left, bottom, width, height );
+        this.renderer.setScissorTest( true );
+        this.renderer.setClearColor( new Color( 0.5, 0.5, 0.7 ) );
+        this.camera.aspect = width / height;
+        this.camera.updateProjectionMatrix();
+
         this.renderer.render(this.scene, this.camera)
+
+
+        windowWidth = window.innerHeight;
+        windowHeight = window.innerHeight;
+
+        left = Math.floor( 0 );
+        bottom = Math.floor( windowHeight - (windowHeight * 0.3) );
+        width = Math.floor( windowWidth * 0.3 );
+        height = Math.floor( windowHeight * 0.3 );
+
+        this.renderer.setViewport( left, bottom, width, height );
+        this.renderer.setScissor( left, bottom, width, height );
+        this.renderer.setScissorTest( true );
+        this.renderer.setClearColor( new Color( 0.5, 0.5, 0.7 ) );
+        this.camera2.aspect = width / height;
+
+        this.camera2.updateProjectionMatrix();
+        this.renderer.render(this.scene, this.camera2)
         return this
     }
 
     onWindowResize() {
-        this.camera.aspect = window.innerWidth / window.innerHeight
-        this.camera.updateProjectionMatrix()
-        this.renderer.setSize(window.innerWidth, window.innerHeight)
+        // this.camera.aspect = window.innerWidth / window.innerHeight
+        // this.camera.updateProjectionMatrix()
+        // this.renderer.setSize(window.innerWidth, window.innerHeight)
     }
 }
 

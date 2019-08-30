@@ -1,10 +1,11 @@
-// import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls'
-import { PointerLockControls } from './PointerLockControls'
+import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls'
+// import { PointerLockControls } from './PointerLockControls'
 import { Vector3 } from 'three'
 
 class PersonControls extends PointerLockControls {
-    constructor(object, camera, domElement) {
-        super(object, camera, domElement)
+    constructor(model, camera, domElement) {
+        super(camera, domElement)
+        this.model = model
 
 
         this.velocity = new Vector3()
@@ -40,13 +41,19 @@ class PersonControls extends PointerLockControls {
 
         this.onKeyDown = (event) => this._onKeyDown(event)
         this.onKeyUp = (event) => this._onKeyUp(event)
+
+        // this.addEventListener('change', () => {
+        //     this.model.rotation.z = Math.atan2( ( camera.position.x - this.model.position.x ), ( camera.position.z - this.model.position.z ) );
+        // })
+
         this.setKeyboardEvents()
     }
 
     update(delta) {
         if (this.isLocked === true) {
-            this.velocity.x -= this.velocity.x * 10.0 * delta
-            this.velocity.z -= this.velocity.z * 10.0 * delta
+
+            this.velocity.x -= this.velocity.x * 5.0 * delta
+            this.velocity.z -= this.velocity.z * 5.0 * delta
             this.velocity.y -= 9.8 * 100.0 * delta // 100.0 = mass
 
             this.direction.z = Number(this.canMoveForward) - Number(this.canMoveBackward)
@@ -65,9 +72,9 @@ class PersonControls extends PointerLockControls {
             this.moveForward(- this.velocity.z * delta)
 
             this.getObject().position.y += this.velocity.y * delta // new behavior
-            if (this.getObject().position.y < 10) {
+            if (this.getObject().position.y < 0.5) {
                 this.velocity.y = 0
-                this.getObject().position.y = 10
+                this.getObject().position.y = 0.5
                 this.canJump = true
             }
         }
