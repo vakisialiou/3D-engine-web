@@ -42,18 +42,20 @@ class PersonControls extends PointerLockControls {
         this.onKeyDown = (event) => this._onKeyDown(event)
         this.onKeyUp = (event) => this._onKeyUp(event)
 
-        // this.addEventListener('change', () => {
-        //     this.model.rotation.z = Math.atan2( ( camera.position.x - this.model.position.x ), ( camera.position.z - this.model.position.z ) );
-        // })
-
         this.setKeyboardEvents()
+
+        this.animation = null
     }
 
     update(delta) {
+
+        const prevAnimation = this.animation
+        this.animation = null
+
         if (this.isLocked === true) {
 
-            this.velocity.x -= this.velocity.x * 5.0 * delta
-            this.velocity.z -= this.velocity.z * 5.0 * delta
+            this.velocity.x -= this.velocity.x * 10.0 * delta
+            this.velocity.z -= this.velocity.z * 10.0 * delta
             this.velocity.y -= 9.8 * 100.0 * delta // 100.0 = mass
 
             this.direction.z = Number(this.canMoveForward) - Number(this.canMoveBackward)
@@ -61,11 +63,17 @@ class PersonControls extends PointerLockControls {
 
             this.direction.normalize() // this ensures consistent movements in all directions
             if (this.canMoveForward || this.canMoveBackward) {
-                this.velocity.z -= this.direction.z * 400.0 * delta
+                this.velocity.z -= this.direction.z * 800.0 * delta
+                this.animation = 'run'
             }
 
             if (this.canMoveLeft || this.canMoveRight) {
-                this.velocity.x -= this.direction.x * 400.0 * delta
+                this.velocity.x -= this.direction.x * 800.0 * delta
+                this.animation = 'run'
+            }
+
+            if (!this.canMoveForward && !this.canMoveBackward && !this.canMoveLeft && !this.canMoveRight) {
+                this.animation = 'idle'
             }
 
             this.moveRight(- this.velocity.x * delta)
@@ -76,8 +84,18 @@ class PersonControls extends PointerLockControls {
                 this.velocity.y = 0
                 this.getObject().position.y = 0.5
                 this.canJump = true
+            } else {
+                this.animation = 'idle'
             }
+        } else {
+            this.animation = 'idle'
         }
+
+        if (prevAnimation !== this.animation) {
+            this.dispatchEvent({ type: 'change-animation', animation: this.animation, prevAnimation })
+        }
+
+
     }
 
     setKeyboardEvents() {

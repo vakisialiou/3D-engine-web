@@ -3,7 +3,7 @@
     <Logo msg="3D engine"/>
     <div id="instructions">
       <span style="font-size:36px">Click to play</span>
-      <br /><br />
+      <br />
       Move: WASD<br/>
       Jump: SPACE<br/>
       Look: MOUSE
@@ -36,7 +36,7 @@ export default {
       engine.controls.addEventListener('unlock', () => {
         this.instructions.style.display = ''
       })
-    }, 1200)
+    }, 2000)
   }
 }
 </script>
@@ -59,6 +59,7 @@ export default {
     height: 100%;
     position: fixed;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     color: #ffffff;
