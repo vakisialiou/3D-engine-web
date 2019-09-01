@@ -17,6 +17,7 @@ import {
     PerspectiveCamera,
     OrthographicCamera,
     MeshBasicMaterial,
+    MeshPhongMaterial,
     BoxBufferGeometry,
     PlaneBufferGeometry,
     MeshLambertMaterial,
@@ -34,6 +35,8 @@ import PersonControls from './Controls/PersonControls'
 import Stats from 'three/examples/jsm/libs/stats.module'
 import { GUI } from 'three/examples/jsm/libs/dat.gui.module'
 import { Fire } from 'three/examples/jsm/objects/Fire'
+
+const gui = new GUI();
 
 class Engine {
     constructor() {
@@ -94,50 +97,134 @@ class Engine {
 
 
 
-        const texture1 = new TextureLoader().load( 'textures/4.jpg')
-        const geometry1 = new BoxBufferGeometry(50, 50, 50);
+        const texture1 = new TextureLoader().load( 'textures/6.jpg')
+        texture1.wrapT = RepeatWrapping
+        texture1.wrapS = RepeatWrapping
+        texture1.repeat.set(80, 2)
+        const geometry1 = new BoxBufferGeometry(5, 10, 1000);
         const material1 = new MeshBasicMaterial({ map: texture1 })
         const mesh1 = new Mesh(geometry1, material1)
-        mesh1.position.set(40, -10, -80);
+        mesh1.position.set(50, 5, 0);
         this.scene.add(mesh1)
 
-        const texture2 = new TextureLoader().load( 'textures/5.jpg')
-        const geometry2 = new BoxBufferGeometry(50, 50, 50);
-        const material2 = new MeshBasicMaterial({ map: texture2 })
-        const mesh2 = new Mesh(geometry2, material2)
-        mesh2.position.set(50, -10, -180);
+        const mesh2 = mesh1.clone()
+        mesh2.position.set(-50, 5, 0);
         this.scene.add(mesh2)
 
-        const texture3 = new TextureLoader().load( 'textures/7.jpg')
-        const geometry3 = new BoxBufferGeometry(50, 50, 50);
-        const material3 = new MeshBasicMaterial({ map: texture3 })
-        const mesh3 = new Mesh(geometry3, material3)
-        mesh3.position.set(-50, -10, 180);
+        const texture2 = new TextureLoader().load( 'textures/7.jpg')
+        texture2.wrapT = RepeatWrapping
+        texture2.wrapS = RepeatWrapping
+        texture2.repeat.set(1, 4)
+        const geometry2 = new BoxBufferGeometry(15, 60, 15);
+        const material2 = new MeshBasicMaterial({ map: texture2 })
+        const mesh3 = new Mesh(geometry2, material2)
+
+        mesh3.position.set(50, 30, 0);
         this.scene.add(mesh3)
+
+        const cloneM3 = mesh3.clone()
+        cloneM3.position.set(-50, 30, 0);
+        this.scene.add(cloneM3)
+
+        let step = 100
+        for (let i = 1; i <= 5; i++) {
+            const meshClone1 = mesh3.clone()
+            meshClone1.position.set(50, 30, -(i * step));
+            this.scene.add(meshClone1)
+
+            const meshClone2 = mesh3.clone()
+            meshClone2.position.set(-50, 30, -(i * step));
+            this.scene.add(meshClone2)
+
+            const meshClone3 = mesh3.clone()
+            meshClone3.position.set(50, 30, (i * step));
+            this.scene.add(meshClone3)
+
+            const meshClone4 = mesh3.clone()
+            meshClone4.position.set(-50, 30, (i * step));
+            this.scene.add(meshClone4)
+        }
+
+        // const mesh3Clone = mesh3.clone()
+        // mesh3Clone.position.set(-50, 30, -180);
+        // this.scene.add(mesh3Clone)
+        //
+        // const texture3 = new TextureLoader().load( 'textures/7.jpg')
+        // texture3.wrapT = RepeatWrapping
+        // texture3.wrapS = RepeatWrapping
+        // texture3.repeat.set(1, 4)
+        // const geometry3 = new BoxBufferGeometry(15, 60, 15);
+        // const material3 = new MeshBasicMaterial({ map: texture3 })
+        // const mesh4 = new Mesh(geometry3, material3)
+        // mesh4.position.set(-50, 30, 180);
+        // this.scene.add(mesh4)
+        //
+        // const mesh4Clone = mesh4.clone()
+        // mesh4Clone.position.set(50, 30, 180);
+        // this.scene.add(mesh4Clone)
 
 
         // GROUND
-        const groundGeo = new PlaneBufferGeometry(5000, 5000)
+        const groundGeo = new PlaneBufferGeometry(100, 1000)
 
-        const textureGround = new TextureLoader().load( 'textures/2.png')
-        textureGround.wrapT = RepeatWrapping
-        textureGround.wrapS = RepeatWrapping
-        textureGround.repeat.set(20, 20)
+        const textureGround = new TextureLoader().load( 'textures/12.jpg')
+        textureGround.wrapT = MirroredRepeatWrapping
+        textureGround.wrapS = MirroredRepeatWrapping
+        textureGround.repeat.set(1, 10)
 
 
-        const materialGround = new MeshBasicMaterial({ map: textureGround })
+        const textureGroundBump = new TextureLoader().load( 'textures/12.bump.jpg')
+        textureGroundBump.wrapT = MirroredRepeatWrapping
+        textureGroundBump.wrapS = MirroredRepeatWrapping
+        textureGroundBump.repeat.set(1, 10)
+
+        const textureGroundSpecular = new TextureLoader().load( 'textures/12.specular.jpg')
+        textureGroundSpecular.wrapT = MirroredRepeatWrapping
+        textureGroundSpecular.wrapS = MirroredRepeatWrapping
+        textureGroundSpecular.repeat.set(1, 10)
+
+        const materialGround = new MeshPhongMaterial({
+            map: textureGround,
+            bumpMap: textureGroundBump,
+            bumpScale: 5,
+            specularMap: textureGroundSpecular,
+            specular: new Color('grey')
+        })
         const ground = new Mesh(groundGeo, materialGround)
-        ground.position.y = - 33
+        ground.position.y = 0
         ground.rotation.x = - Math.PI / 2
         ground.receiveShadow = true
         this.scene.add(ground)
 
+        const folderGround = gui.addFolder('Ground')
+        folderGround.add(ground.material, 'bumpScale', -5, 5).step(0.01)
+
+
+        // GROUND - 2
+        const groundGeo2 = new PlaneBufferGeometry(5000, 5000)
+
+        const textureGround2 = new TextureLoader().load( 'textures/1.jpg')
+        textureGround2.wrapT = MirroredRepeatWrapping
+        textureGround2.wrapS = MirroredRepeatWrapping
+        textureGround2.repeat.set(90, 90)
+        const materialGround2 = new MeshBasicMaterial({
+            map: textureGround2,
+        })
+
+        const ground2 = new Mesh(groundGeo2, materialGround2)
+        ground2.position.y = -1
+        ground2.rotation.x = - Math.PI / 2
+        ground2.receiveShadow = true
+        this.scene.add(ground2)
+
+
+
         // SKYDOME
-        const sky = new SkyDome()
-        this.scene.add(sky)
+        this.sky = new SkyDome()
+        this.scene.add(this.sky)
 
 
-        const gui = new GUI();
+
         this.mixers = []
 
         // PERSON
@@ -147,7 +234,7 @@ class Engine {
             const mesh = gltf.scene.children[0]
             const s = 0.20
             mesh.scale.set(s, s, s)
-            mesh.position.y = - 33
+            mesh.position.y = 0
             // mesh.position.z = 10
             mesh.castShadow = true
             mesh.receiveShadow = true
@@ -240,7 +327,7 @@ class Engine {
                     const p = o.position.clone().add(v)
                     mesh.position.x = p.x
                     mesh.position.z = p.z
-                    mesh.position.y = p.y - 43
+                    mesh.position.y = p.y - 45
 
                     eulerCamera.setFromQuaternion( o.quaternion );
                     eulerCamera.x = - Math.PI / 2
@@ -248,6 +335,7 @@ class Engine {
 
 
                     this.camera2.lookAt(mesh.position)
+                    this.sky.position.copy(o.position)
                 }
             })
 
@@ -371,20 +459,20 @@ class Engine {
 
 
         for (let i = 0; i < 3; i++) {
-            for (let a = 0; a < 3; a++) {
+            for (let a = 0; a < 6; a++) {
 
                 loader.load('models/Soldier.glb', (gltf) => {
                     const mesh = gltf.scene.children[0]
                     const s = 0.20
                     mesh.scale.set(s, s, s)
-                    mesh.position.set(i * 55, -33, a * 55)
+                    mesh.position.set((i * 20 - 20), 0, a * 40)
                     mesh.castShadow = true
                     mesh.receiveShadow = true
 
                     this.scene.add(mesh)
 
                     const mixer = new AnimationMixer(mesh)
-                    mixer.clipAction(gltf.animations[3]).setDuration(1).play()
+                    mixer.clipAction(gltf.animations[0]).setDuration(1).play()
                     this.mixers.push(mixer)
                 })
 

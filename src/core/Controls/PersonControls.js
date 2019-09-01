@@ -80,9 +80,9 @@ class PersonControls extends PointerLockControls {
             this.moveForward(- this.velocity.z * delta)
 
             this.getObject().position.y += this.velocity.y * delta // new behavior
-            if (this.getObject().position.y < 0.5) {
+            if (this.getObject().position.y < 30) {
                 this.velocity.y = 0
-                this.getObject().position.y = 0.5
+                this.getObject().position.y = 30
                 this.canJump = true
             } else {
                 this.animation = 'idle'
