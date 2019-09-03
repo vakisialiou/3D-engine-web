@@ -1,12 +1,9 @@
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls'
-// import { PointerLockControls } from './PointerLockControls'
 import { Vector3 } from 'three'
 
 class PersonControls extends PointerLockControls {
-    constructor(model, camera, domElement) {
+    constructor(camera, domElement) {
         super(camera, domElement)
-        this.model = model
-
 
         this.velocity = new Vector3()
         this.direction = new Vector3()
@@ -44,13 +41,13 @@ class PersonControls extends PointerLockControls {
 
         this.setKeyboardEvents()
 
-        this.animation = null
+        this.action = null
     }
 
     update(delta) {
 
-        const prevAnimation = this.animation
-        this.animation = null
+        const prevAction = this.action
+        this.action = null
 
         if (this.isLocked === true) {
 
@@ -64,16 +61,16 @@ class PersonControls extends PointerLockControls {
             this.direction.normalize() // this ensures consistent movements in all directions
             if (this.canMoveForward || this.canMoveBackward) {
                 this.velocity.z -= this.direction.z * 800.0 * delta
-                this.animation = 'run'
+                this.action = 'run'
             }
 
             if (this.canMoveLeft || this.canMoveRight) {
                 this.velocity.x -= this.direction.x * 800.0 * delta
-                this.animation = 'run'
+                this.action = 'run'
             }
 
             if (!this.canMoveForward && !this.canMoveBackward && !this.canMoveLeft && !this.canMoveRight) {
-                this.animation = 'idle'
+                this.action = 'stop'
             }
 
             this.moveRight(- this.velocity.x * delta)
@@ -85,14 +82,14 @@ class PersonControls extends PointerLockControls {
                 this.getObject().position.y = 30
                 this.canJump = true
             } else {
-                this.animation = 'idle'
+                this.action = 'stop'
             }
         } else {
-            this.animation = 'idle'
+            this.action = 'stop'
         }
 
-        if (prevAnimation !== this.animation) {
-            this.dispatchEvent({ type: 'change-animation', animation: this.animation, prevAnimation })
+        if (prevAction && prevAction !== this.action) {
+            this.dispatchEvent({ type: 'change-action', action: this.action, prevAction })
         }
 
 

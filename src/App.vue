@@ -24,19 +24,17 @@ export default {
     const engine = new Engine()
     engine.render(this.$el).animate()
 
-    setTimeout(() => {
-      this.instructions = document.getElementById('instructions')
-      this.instructions.addEventListener('click', () => {
+    this.instructions = document.getElementById('instructions')
+    this.instructions.addEventListener('click', () => {
         engine.controls.lock()
-      }, false)
+    }, false)
 
-      engine.controls.addEventListener('lock', () => {
+    engine.controls.addEventListener('lock', () => {
         this.instructions.style.display = 'none'
-      })
-      engine.controls.addEventListener('unlock', () => {
+    })
+    engine.controls.addEventListener('unlock', () => {
         this.instructions.style.display = ''
-      })
-    }, 2000)
+    })
   }
 }
 </script>

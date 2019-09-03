@@ -1,33 +1,16 @@
 import {
     Fog,
-    Mesh,
+    Euler,
     Color,
     Clock,
     Scene,
-    Vector2,
     Vector3,
-    Vector4,
-    Object3D,
-    ArrayCamera,
     WebGLRenderer,
-    TextureLoader,
-    AnimationMixer,
     HemisphereLight,
     DirectionalLight,
     PerspectiveCamera,
-    OrthographicCamera,
-    MeshBasicMaterial,
-    MeshPhongMaterial,
-    BoxBufferGeometry,
-    PlaneBufferGeometry,
-    MeshLambertMaterial,
     HemisphereLightHelper,
-    DirectionalLightHelper,
-    Euler,DataTexture, RGBFormat,
-    NearestFilter, SpriteMaterial, Sprite,
-    FrontSide, BackSide, DoubleSide, RepeatWrapping, MirroredRepeatWrapping,ClampToEdgeWrapping,
-    AmbientLight,
-    PointLight
+    DirectionalLightHelper
 } from 'three'
 import SkyDome from './SkyDome'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
@@ -35,6 +18,8 @@ import PersonControls from './Controls/PersonControls'
 import Stats from 'three/examples/jsm/libs/stats.module'
 import { GUI } from 'three/examples/jsm/libs/dat.gui.module'
 import Shape from './Helpers/Shape'
+import Person from './Controls/Person'
+
 
 const gui = new GUI();
 
@@ -51,7 +36,7 @@ class Engine {
         const width = window.innerWidth;
         const height = window.innerHeight;
 
-        this.camera = new PerspectiveCamera(40, width / height, 1, 5000)
+        this.camera = new PerspectiveCamera(60, width / height, 1, 5000)
         this.camera.position.set(0, 30, 250)
 
         this.camera2 = new PerspectiveCamera(30, 1, 1, 5000);
@@ -102,7 +87,7 @@ class Engine {
                 const shape = new Shape()
                     .setTextureMaterial('textures/1.png')
                     .setPositionY(50 / 2)
-                    .setPositionX(i * 250)
+                    .setPositionX((i * 250) - 100)
                     .setPositionZ(a * 250)
                     .cube(50)
                 this.scene.add(shape)
@@ -119,272 +104,53 @@ class Engine {
         this.scene.add(this.sky)
 
 
-
-        this.mixers = []
+        this.controls = new PersonControls(this.camera, this.renderer.domElement)
 
         // PERSON
         const loader = new GLTFLoader()
         loader.load('models/Soldier.glb', (gltf) => {
+            this.person = new Person(gltf).activateAllActions()
+            this.scene.add(this.person)
 
-            const mesh = gltf.scene.children[0]
-            const s = 0.20
-            mesh.scale.set(s, s, s)
-            mesh.position.y = 0
-            // mesh.position.z = 10
-            mesh.castShadow = true
-            mesh.receiveShadow = true
-
-            this.scene.add(mesh)
-
-            const mixer = new AnimationMixer(mesh)
-            // mixer.clipAction(gltf.animations[0]).setDuration(0.6).play()
-            this.mixers.push(mixer)
-
-            this.controls = new PersonControls(mesh, this.camera, this.renderer.domElement)
-            this.updates.push(this.controls)
-
-            const idleAction = mixer.clipAction(gltf.animations[ 0 ]);
-            const runAction = mixer.clipAction(gltf.animations[ 1 ]);
-            const actions = [idleAction, runAction]
-
-            activateAllActions()
-
-            function prepareCrossFade( startAction, endAction, duration ) {
-                unPauseAllActions();
-                // If the current action is 'idle' (duration 4 sec), execute the crossfade immediately;
-                // else wait until the current action has finished its current loop
-                if ( startAction === idleAction ) {
-                    executeCrossFade( startAction, endAction, duration );
-                } else {
-                    synchronizeCrossFade( startAction, endAction, duration );
-                }
-            }
-
-            function activateAllActions() {
-                setWeight( idleAction, 1 );
-                setWeight( runAction, 0 );
-
-                actions.forEach( function ( action ) {
-                    action.play();
-                } );
-            }
-
-            function unPauseAllActions() {
-                actions.forEach( function ( action ) {
-                    action.paused = false;
-                } );
-            }
-
-            function executeCrossFade( startAction, endAction, duration ) {
-                // Not only the start action, but also the end action must get a weight of 1 before fading
-                // (concerning the start action this is already guaranteed in this place)
-                setWeight( endAction, 1 );
-                endAction.time = 0;
-                // Crossfade with warping - you can also try without warping by setting the third parameter to false
-                startAction.crossFadeTo( endAction, duration, true );
-            }
-
-            function setWeight( action, weight ) {
-                action.enabled = true;
-                action.setEffectiveTimeScale( 1 );
-                action.setEffectiveWeight( weight );
-            }
-
-            function synchronizeCrossFade( startAction, endAction, duration ) {
-                mixer.addEventListener( 'loop', onLoopFinished );
-                function onLoopFinished( event ) {
-                    if ( event.action === startAction ) {
-                        mixer.removeEventListener( 'loop', onLoopFinished );
-                        executeCrossFade( startAction, endAction, duration );
-                    }
-                }
-            }
-
-            this.controls.addEventListener('change-animation', (event) => {
-                switch (event.animation) {
-                    case 'idle':
-                        prepareCrossFade( runAction, idleAction, 0.2 );
+            this.controls.addEventListener('change-action', (event) => {
+                switch (event.action) {
+                    case 'stop':
+                        this.person.stop()
                         break
                     case 'run':
-                        prepareCrossFade( idleAction, runAction, 0.2 );
+                        this.person.run()
                         break
                 }
             })
 
+            const eulerCamera = new Euler(0, 0, 0, 'YXZ')
 
-            const eulerCamera = new Euler( 0, 0, 0, 'YXZ' );
-
+            const tmpVector = new Vector3()
             this.updates.push({
-                update: () => {
+                update: (delta) => {
+                    this.controls.update(delta)
                     const o = this.controls.getObject()
-
-                    const v = this.controls.getDirection(new Vector3()).multiplyScalar(-10)
+                    const v = this.controls.getDirection(tmpVector).multiplyScalar(-10)
                     const p = o.position.clone().add(v)
-                    mesh.position.x = p.x
-                    mesh.position.z = p.z
-                    mesh.position.y = p.y - 45
 
-                    eulerCamera.setFromQuaternion( o.quaternion );
+                    this.person.position.x = p.x
+                    this.person.position.z = p.z
+
+                    eulerCamera.setFromQuaternion(o.quaternion)
                     eulerCamera.x = - Math.PI / 2
-                    mesh.quaternion.setFromEuler(eulerCamera);
+                    this.person.model.quaternion.setFromEuler(eulerCamera)
 
-
-                    this.camera2.lookAt(mesh.position)
+                    this.camera2.position.x = this.person.position.x
+                    this.camera2.position.y = this.person.position.y + 100
+                    this.camera2.position.z = this.person.position.z + 100
+                    this.camera2.lookAt(this.person.position)
                     this.sky.position.copy(o.position)
+                    this.person.update(delta)
                 }
             })
 
             this.scene.add(this.controls.getObject())
         })
-
-
-
-
-
-
-
-
-
-        /*loader.load('models/Soldier.glb', (gltf) => {
-            const mesh = gltf.scene.children[0]
-            const s = 0.20
-            mesh.scale.set(s, s, s)
-            mesh.position.set(55, -33, 55)
-            mesh.castShadow = true
-            mesh.receiveShadow = true
-
-            this.scene.add(mesh)
-
-            const mixer = new AnimationMixer(mesh)
-            this.mixers.push(mixer)
-
-            const idleAction = mixer.clipAction(gltf.animations[ 0 ]);
-            const walkAction = mixer.clipAction(gltf.animations[ 3 ]);
-            const runAction = mixer.clipAction(gltf.animations[ 1 ]);
-            const actions = [idleAction, walkAction, runAction]
-
-            activateAllActions()
-
-            const settings = {
-                'from walk to idle': function () {
-                    prepareCrossFade( walkAction, idleAction, 0.2 );
-                },
-                'from idle to walk': function () {
-                    prepareCrossFade( idleAction, walkAction, 0.2 );
-                },
-                'from walk to run': function () {
-                    prepareCrossFade( walkAction, runAction, 0.2 );
-                },
-                'from run to walk': function () {
-                    prepareCrossFade( runAction, walkAction, 0.2 );
-                },
-                'from run to idle': function () {
-                    prepareCrossFade( runAction, idleAction, 0.2 );
-                },
-                'from idle to run': function () {
-                    prepareCrossFade( idleAction, runAction, 0.2 );
-                },
-            }
-
-            const folderPerson = gui.addFolder('Person')
-            folderPerson.add(settings, 'from walk to idle')
-            folderPerson.add(settings, 'from idle to walk')
-            folderPerson.add(settings, 'from idle to run')
-            folderPerson.add(settings, 'from walk to run')
-            folderPerson.add(settings, 'from run to walk')
-            folderPerson.add(settings, 'from run to idle')
-
-            function prepareCrossFade( startAction, endAction, duration ) {
-                unPauseAllActions();
-                // If the current action is 'idle' (duration 4 sec), execute the crossfade immediately;
-                // else wait until the current action has finished its current loop
-                if ( startAction === idleAction ) {
-                    executeCrossFade( startAction, endAction, duration );
-                } else {
-                    synchronizeCrossFade( startAction, endAction, duration );
-                }
-            }
-
-            function activateAllActions() {
-                setWeight( idleAction, 1 );
-                setWeight( walkAction, 0 );
-                setWeight( runAction, 0 );
-
-                actions.forEach( function ( action ) {
-                    action.play();
-                } );
-            }
-
-            function unPauseAllActions() {
-                actions.forEach( function ( action ) {
-                    action.paused = false;
-                } );
-            }
-
-            function executeCrossFade( startAction, endAction, duration ) {
-                // Not only the start action, but also the end action must get a weight of 1 before fading
-                // (concerning the start action this is already guaranteed in this place)
-                setWeight( endAction, 1 );
-                endAction.time = 0;
-                // Crossfade with warping - you can also try without warping by setting the third parameter to false
-                startAction.crossFadeTo( endAction, duration, true );
-            }
-
-            function setWeight( action, weight ) {
-                action.enabled = true;
-                action.setEffectiveTimeScale( 1 );
-                action.setEffectiveWeight( weight );
-            }
-
-            function synchronizeCrossFade( startAction, endAction, duration ) {
-                mixer.addEventListener( 'loop', onLoopFinished );
-                function onLoopFinished( event ) {
-                    if ( event.action === startAction ) {
-                        mixer.removeEventListener( 'loop', onLoopFinished );
-                        executeCrossFade( startAction, endAction, duration );
-                    }
-                }
-            }
-        })*/
-
-
-
-
-
-
-
-        // for (let i = 0; i < 3; i++) {
-        //     for (let a = 0; a < 6; a++) {
-        //
-        //         loader.load('models/Soldier.glb', (gltf) => {
-        //             const mesh = gltf.scene.children[0]
-        //             const s = 0.20
-        //             mesh.scale.set(s, s, s)
-        //             mesh.position.set((i * 20 - 20), 0, a * 40)
-        //             mesh.castShadow = true
-        //             mesh.receiveShadow = true
-        //
-        //             this.scene.add(mesh)
-        //
-        //             const mixer = new AnimationMixer(mesh)
-        //             mixer.clipAction(gltf.animations[0]).setDuration(1).play()
-        //             this.mixers.push(mixer)
-        //         })
-        //
-        //     }
-        // }
-
-
-
-
-
-
-
-
-
-
-
-
 
         const folder = gui.addFolder('Small camera')
         folder.add(this.camera2.position, 'x', -500, 500)
@@ -427,10 +193,6 @@ class Engine {
 
         for (const item of this.updates) {
             item.update(delta)
-        }
-
-        for (let i = 0; i < this.mixers.length; i ++) {
-            this.mixers[i].update(delta)
         }
 
         let windowWidth = window.innerWidth;
