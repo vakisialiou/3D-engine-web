@@ -6,6 +6,7 @@ const ACTION_RUN = 'run'
 class PersonControls extends Group {
     constructor(gltf) {
         super()
+
         this.model = gltf.scene.children[0]
         this.model.scale.set(0.20, 0.20, 0.20)
 

@@ -148,8 +148,6 @@ class Engine {
                     this.person.update(delta)
                 }
             })
-
-            this.scene.add(this.cameraControls.getObject())
         })
 
         const folder = gui.addFolder('Small camera')
