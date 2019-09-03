@@ -26,13 +26,13 @@ export default {
 
     this.instructions = document.getElementById('instructions')
     this.instructions.addEventListener('click', () => {
-        engine.controls.lock()
+        engine.cameraControls.lock()
     }, false)
 
-    engine.controls.addEventListener('lock', () => {
+    engine.cameraControls.addEventListener('lock', () => {
         this.instructions.style.display = 'none'
     })
-    engine.controls.addEventListener('unlock', () => {
+    engine.cameraControls.addEventListener('unlock', () => {
         this.instructions.style.display = ''
     })
   }

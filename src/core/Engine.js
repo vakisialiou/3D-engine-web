@@ -14,11 +14,11 @@ import {
 } from 'three'
 import SkyDome from './SkyDome'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
-import PersonControls from './Controls/PersonControls'
+import CameraControls from './Controls/CameraControls'
 import Stats from 'three/examples/jsm/libs/stats.module'
 import { GUI } from 'three/examples/jsm/libs/dat.gui.module'
 import Shape from './Helpers/Shape'
-import Person from './Controls/Person'
+import PersonControls from './Controls/PersonControls'
 
 
 const gui = new GUI();
@@ -104,15 +104,15 @@ class Engine {
         this.scene.add(this.sky)
 
 
-        this.controls = new PersonControls(this.camera, this.renderer.domElement)
+        this.cameraControls = new CameraControls(this.camera, this.renderer.domElement)
 
         // PERSON
         const loader = new GLTFLoader()
         loader.load('models/Soldier.glb', (gltf) => {
-            this.person = new Person(gltf).activateAllActions()
+            this.person = new PersonControls(gltf).activateAllActions()
             this.scene.add(this.person)
 
-            this.controls.addEventListener('change-action', (event) => {
+            this.cameraControls.addEventListener('change-action', (event) => {
                 switch (event.action) {
                     case 'stop':
                         this.person.stop()
@@ -128,9 +128,9 @@ class Engine {
             const tmpVector = new Vector3()
             this.updates.push({
                 update: (delta) => {
-                    this.controls.update(delta)
-                    const o = this.controls.getObject()
-                    const v = this.controls.getDirection(tmpVector).multiplyScalar(-10)
+                    this.cameraControls.update(delta)
+                    const o = this.cameraControls.getObject()
+                    const v = this.cameraControls.getDirection(tmpVector).multiplyScalar(-10)
                     const p = o.position.clone().add(v)
 
                     this.person.position.x = p.x
@@ -149,7 +149,7 @@ class Engine {
                 }
             })
 
-            this.scene.add(this.controls.getObject())
+            this.scene.add(this.cameraControls.getObject())
         })
 
         const folder = gui.addFolder('Small camera')
