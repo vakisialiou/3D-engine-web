@@ -37,7 +37,8 @@ class Engine {
         const height = window.innerHeight;
 
         this.camera = new PerspectiveCamera(60, width / height, 1, 5000)
-        this.camera.position.set(0, 30, 250)
+        // this.camera.position.set(0, 30, 250)
+        this.camera.position.set(0, 40, 80)
 
         this.camera2 = new PerspectiveCamera(30, 1, 1, 5000);
         this.camera2.position.set(-200, 600, -200);
@@ -103,58 +104,68 @@ class Engine {
         this.sky = new SkyDome()
         this.scene.add(this.sky)
 
-
-        this.cameraControls = new CameraControls(this.camera, this.renderer.domElement)
-
-        // PERSON
-        const loader = new GLTFLoader()
-        loader.load('models/Soldier.glb', (gltf) => {
-            this.person = new PersonControls(gltf).activateAllActions()
-            this.scene.add(this.person)
-
-            this.cameraControls.addEventListener('change-action', (event) => {
-                switch (event.action) {
-                    case 'stop':
-                        this.person.stop()
-                        break
-                    case 'run':
-                        this.person.run()
-                        break
-                }
-            })
-
-            const eulerCamera = new Euler(0, 0, 0, 'YXZ')
-
-            const tmpVector = new Vector3()
-            this.updates.push({
-                update: (delta) => {
-                    this.cameraControls.update(delta)
-                    const o = this.cameraControls.getObject()
-                    const v = this.cameraControls.getDirection(tmpVector).multiplyScalar(-10)
-                    const p = o.position.clone().add(v)
-
-                    this.person.position.x = p.x
-                    this.person.position.z = p.z
-
-                    eulerCamera.setFromQuaternion(o.quaternion)
-                    eulerCamera.x = - Math.PI / 2
-                    this.person.model.quaternion.setFromEuler(eulerCamera)
-
-                    this.camera2.position.x = this.person.position.x
-                    this.camera2.position.y = this.person.position.y + 100
-                    this.camera2.position.z = this.person.position.z + 100
-                    this.camera2.lookAt(this.person.position)
-                    this.sky.position.copy(o.position)
-                    this.person.update(delta)
-                }
-            })
-        })
+        this.person = null
+        this.cameraControls = null
 
         const folder = gui.addFolder('Small camera')
         folder.add(this.camera2.position, 'x', -500, 500)
         folder.add(this.camera2.position, 'y', 100, 1000)
         folder.add(this.camera2.position, 'z', -500, 500)
 
+    }
+
+    initGraph() {
+        return new Promise((resolve) => {
+            // PERSON
+            const loader = new GLTFLoader()
+            loader.load('models/Soldier.glb', (gltf) => {
+                this.person = new PersonControls(gltf).activateAllActions()
+                this.cameraControls = new CameraControls(this.person, this.camera, this.renderer.domElement)
+
+                this.person.add(this.camera)
+                this.scene.add(this.person)
+
+                this.cameraControls.addEventListener('change-action', (event) => {
+                    switch (event.action) {
+                        case 'stop':
+                            this.person.stop()
+                            break
+                        case 'run':
+                            this.person.run()
+                            break
+                    }
+                })
+
+                const eulerCamera = new Euler(0, 0, 0, 'YXZ')
+                const tmpVector = new Vector3()
+
+                this.updates.push({
+                    update: (delta) => {
+                        this.cameraControls.update(delta)
+                        // const o = this.cameraControls.getObject()
+
+                        // const v = this.cameraControls.getDirection(tmpVector).multiplyScalar(-10)
+                        // const p = o.position.clone().add(v)
+                        //
+                        // this.person.position.x = p.x
+                        // this.person.position.z = p.z
+
+                        // eulerCamera.setFromQuaternion(o.quaternion)
+                        // eulerCamera.x = - Math.PI / 2
+                        // this.person.model.quaternion.setFromEuler(eulerCamera)
+
+                        this.camera2.position.x = this.person.position.x
+                        this.camera2.position.y = this.person.position.y + 100
+                        this.camera2.position.z = this.person.position.z + 100
+                        this.camera2.lookAt(this.person.position)
+                        this.sky.position.copy(this.person.position)
+                        this.person.update(delta)
+                    }
+                })
+
+                resolve()
+            })
+        })
     }
 
     /**

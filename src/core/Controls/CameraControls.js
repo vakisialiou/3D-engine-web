@@ -1,10 +1,11 @@
-import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls'
+import { PointerLockControls } from './PointerLockControls'
 import { Vector3 } from 'three'
 
 class CameraControls extends PointerLockControls {
-    constructor(camera, domElement) {
-        super(camera, domElement)
+    constructor(person, camera, domElement) {
+        super(person, camera, domElement)
 
+        this.person = person
         this.velocity = new Vector3()
         this.direction = new Vector3()
 
@@ -50,7 +51,6 @@ class CameraControls extends PointerLockControls {
         this.action = null
 
         if (this.isLocked === true) {
-
             this.velocity.x -= this.velocity.x * 10.0 * delta
             this.velocity.z -= this.velocity.z * 10.0 * delta
             this.velocity.y -= 9.8 * 100.0 * delta // 100.0 = mass
@@ -73,17 +73,23 @@ class CameraControls extends PointerLockControls {
                 this.action = 'stop'
             }
 
-            this.moveRight(- this.velocity.x * delta)
-            this.moveForward(- this.velocity.z * delta)
+            if (this.canMoveLeft || this.canMoveRight) {
+                this.moveRight(-this.velocity.x * delta)
+            }
 
-            this.getObject().position.y += this.velocity.y * delta // new behavior
-            if (this.getObject().position.y < 30) {
+            if (this.canMoveForward || this.canMoveBackward) {
+                this.moveForward(-this.velocity.z * delta)
+            }
+
+            this.person.position.y += this.velocity.y * delta // new behavior
+            if (this.person.position.y < 0) {
                 this.velocity.y = 0
-                this.getObject().position.y = 30
+                this.person.position.y = 0
                 this.canJump = true
             } else {
                 this.action = 'stop'
             }
+
         } else {
             this.action = 'stop'
         }

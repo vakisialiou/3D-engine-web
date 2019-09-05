@@ -22,19 +22,21 @@ export default {
   },
   mounted() {
     const engine = new Engine()
-    engine.render(this.$el).animate()
+      engine.initGraph().then(() => {
+          engine.render(this.$el).animate()
 
-    this.instructions = document.getElementById('instructions')
-    this.instructions.addEventListener('click', () => {
-        engine.cameraControls.lock()
-    }, false)
+          this.instructions = document.getElementById('instructions')
+          this.instructions.addEventListener('click', () => {
+              engine.cameraControls.lock()
+          }, false)
 
-    engine.cameraControls.addEventListener('lock', () => {
-        this.instructions.style.display = 'none'
-    })
-    engine.cameraControls.addEventListener('unlock', () => {
-        this.instructions.style.display = ''
-    })
+          engine.cameraControls.addEventListener('lock', () => {
+              this.instructions.style.display = 'none'
+          })
+          engine.cameraControls.addEventListener('unlock', () => {
+              this.instructions.style.display = ''
+          })
+      })
   }
 }
 </script>
