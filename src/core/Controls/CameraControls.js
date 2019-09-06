@@ -6,6 +6,9 @@ class CameraControls extends PointerLockControls {
         super(person, camera, domElement)
 
         this.person = person
+        this.camera = camera
+
+
         this.velocity = new Vector3()
         this.direction = new Vector3()
 
@@ -46,7 +49,6 @@ class CameraControls extends PointerLockControls {
     }
 
     update(delta) {
-
         const prevAction = this.action
         this.action = null
 
@@ -81,6 +83,8 @@ class CameraControls extends PointerLockControls {
                 this.moveForward(-this.velocity.z * delta)
             }
 
+            const h = this.camera.position.y - this.person.position.y
+
             this.person.position.y += this.velocity.y * delta // new behavior
             if (this.person.position.y < 0) {
                 this.velocity.y = 0
@@ -88,6 +92,14 @@ class CameraControls extends PointerLockControls {
                 this.canJump = true
             } else {
                 this.action = 'stop'
+            }
+
+            this.camera.position.y = this.person.position.y + h
+
+            this.updateCamera(delta)
+
+            if ((this.canMoveForward || this.canMoveBackward || this.canMoveLeft || this.canMoveRight) && this.canJump) {
+                this.updatePerson(delta)
             }
 
         } else {

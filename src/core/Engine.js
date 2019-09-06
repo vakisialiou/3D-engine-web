@@ -19,6 +19,7 @@ import Stats from 'three/examples/jsm/libs/stats.module'
 import { GUI } from 'three/examples/jsm/libs/dat.gui.module'
 import Shape from './Helpers/Shape'
 import PersonControls from './Controls/PersonControls'
+import Storage from './../lib/Storage'
 
 
 const gui = new GUI();
@@ -26,6 +27,13 @@ const gui = new GUI();
 class Engine {
     constructor() {
         this.updates = []
+
+        this.enabled = Storage.getStorageItem('engine-status') === 'enabled'
+
+        const engineFolder = gui.addFolder('Engine')
+        engineFolder.add(this, 'enabled').onChange(() => {
+            Storage.setStorageItem('engine-status', this.enabled ? 'enabled' : 'disabled')
+        })
 
         this.stats = new Stats()
 
@@ -122,7 +130,7 @@ class Engine {
                 this.person = new PersonControls(gltf).activateAllActions()
                 this.cameraControls = new CameraControls(this.person, this.camera, this.renderer.domElement)
 
-                this.person.add(this.camera)
+                // this.person.add(this.camera)
                 this.scene.add(this.person)
 
                 this.cameraControls.addEventListener('change-action', (event) => {
@@ -197,6 +205,11 @@ class Engine {
      */
     animate() {
         requestAnimationFrame(() => this.animate())
+
+        if (!this.enabled) {
+            this.stats.update()
+            return this
+        }
 
         const delta = this.clock.getDelta()
 

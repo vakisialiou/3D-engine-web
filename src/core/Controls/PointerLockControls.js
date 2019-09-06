@@ -8,11 +8,14 @@ import {
 	EventDispatcher,
 	Vector3
 } from 'three';
+import OrientationTransform from './OrientationTransform'
 
 var PointerLockControls = function ( person, camera, domElement ) {
 
 	this.domElement = domElement || document.body;
 	this.isLocked = false;
+
+	var ot = new OrientationTransform(person, 4.5)
 
 	//
 	// internals
@@ -24,7 +27,7 @@ var PointerLockControls = function ( person, camera, domElement ) {
 	var lockEvent = { type: 'lock' };
 	var unlockEvent = { type: 'unlock' };
 
-    var tmp = new Vector3().copy(person.position)
+    var tmp = new Vector3()//.copy(person.position)
 	var interval = camera.position.z
 
 
@@ -42,23 +45,32 @@ var PointerLockControls = function ( person, camera, domElement ) {
 		var movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
 		var movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
 
-        eulerPerson.setFromQuaternion( person.quaternion );
-        eulerPerson.y -= movementX * 0.002;
-        eulerPerson.x -= movementY * 0.002;
-        eulerPerson.x = 0;
-        person.quaternion.setFromEuler( eulerPerson );
-
         // CAMERA
-        const v = scope.getPersonDirection().multiplyScalar(- interval)
-        const p = tmp.clone().add(v)
-        camera.position.x = p.x
-        camera.position.z = p.z
-
         eulerCamera.setFromQuaternion( camera.quaternion );
         eulerCamera.y -= movementX * 0.002;
         eulerCamera.x -= movementY * 0.002;
-        eulerCamera.x = Math.max( - PI_2, Math.min( PI_2, eulerCamera.x ) );
+
+		const piTop = Math.PI / 10
+		const piBottom = Math.PI / 6
+
+        eulerCamera.x = Math.max( - piBottom, Math.min( piTop, eulerCamera.x ) );
         camera.quaternion.setFromEuler( eulerCamera );
+
+		// const p = scope.getCameraDirection().multiplyScalar(- interval)
+		// const p2 = tmp.copy(person.position).add(p)
+		// camera.position.x = p2.x
+		// camera.position.z = p2.z
+
+		const p2 = scope.getCameraDirection().multiplyScalar( - interval * 2)
+		tmp.copy(camera.position).add(p2)
+		tmp.y = 0
+		ot.setTarget(tmp)
+
+		// eulerPerson.setFromQuaternion( person.quaternion );
+		// eulerPerson.y -= movementX * 0.002;
+		// eulerPerson.x -= movementY * 0.002;
+		// eulerPerson.x = 0;
+		// person.quaternion.setFromEuler( eulerPerson );
 
 		scope.dispatchEvent( changeEvent );
 
@@ -174,6 +186,17 @@ var PointerLockControls = function ( person, camera, domElement ) {
 		document.exitPointerLock();
 
 	};
+
+	this.updateCamera = function (delta) {
+		const p = scope.getCameraDirection().multiplyScalar(- interval)
+		const p2 = tmp.copy(person.position).add(p)
+		camera.position.x = p2.x
+		camera.position.z = p2.z
+	}
+
+	this.updatePerson = function (delta) {
+		ot.update(delta)
+	}
 
 	this.connect();
 
