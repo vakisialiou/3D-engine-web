@@ -14,13 +14,12 @@ import {
 } from 'three'
 import SkyDome from './SkyDome'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
-import CameraControls from './Controls/CameraControls'
+import PersonControls from './Controls/PersonControls'
 import Stats from 'three/examples/jsm/libs/stats.module'
 import { GUI } from 'three/examples/jsm/libs/dat.gui.module'
 import Shape from './Helpers/Shape'
-import PersonControls from './Controls/PersonControls'
+import AnimationControls from './Controls/AnimationControls'
 import Storage from './../lib/Storage'
-
 
 const gui = new GUI();
 
@@ -113,7 +112,7 @@ class Engine {
         this.scene.add(this.sky)
 
         this.person = null
-        this.cameraControls = null
+        this.personControls = null
 
         const folder = gui.addFolder('Small camera')
         folder.add(this.camera2.position, 'x', -500, 500)
@@ -127,14 +126,14 @@ class Engine {
             // PERSON
             const loader = new GLTFLoader()
             loader.load('models/Soldier.glb', (gltf) => {
-                this.person = new PersonControls(gltf).activateAllActions()
-                this.cameraControls = new CameraControls(this.person, this.camera, this.renderer.domElement)
+                this.person = new AnimationControls(gltf).activateAllActions()
+                this.personControls = new PersonControls(this.person, this.camera, this.renderer.domElement)
+                this.personControls.registerEventListeners()
 
-                // this.person.add(this.camera)
                 this.scene.add(this.person)
 
-                this.cameraControls.addEventListener('change-action', (event) => {
-                    switch (event.action) {
+                this.personControls.addEventListener('action', (event) => {
+                    switch (event.actionName) {
                         case 'stop':
                             this.person.stop()
                             break
@@ -144,23 +143,9 @@ class Engine {
                     }
                 })
 
-                const eulerCamera = new Euler(0, 0, 0, 'YXZ')
-                const tmpVector = new Vector3()
-
                 this.updates.push({
                     update: (delta) => {
-                        this.cameraControls.update(delta)
-                        // const o = this.cameraControls.getObject()
-
-                        // const v = this.cameraControls.getDirection(tmpVector).multiplyScalar(-10)
-                        // const p = o.position.clone().add(v)
-                        //
-                        // this.person.position.x = p.x
-                        // this.person.position.z = p.z
-
-                        // eulerCamera.setFromQuaternion(o.quaternion)
-                        // eulerCamera.x = - Math.PI / 2
-                        // this.person.model.quaternion.setFromEuler(eulerCamera)
+                        this.personControls.update(delta)
 
                         this.camera2.position.x = this.person.position.x
                         this.camera2.position.y = this.person.position.y + 100
@@ -190,7 +175,6 @@ class Engine {
 
         container.appendChild(this.renderer.domElement)
 
-        this.renderer.autoClear = false;
         this.renderer.gammaInput = true
         this.renderer.gammaOutput = true
         // this.renderer.shadowMap.enabled = true
@@ -231,8 +215,6 @@ class Engine {
         this.renderer.setClearColor( new Color( 0.5, 0.5, 0.7 ) );
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
-
-        this.renderer.clear();
         this.renderer.render(this.scene, this.camera)
 
 
@@ -249,9 +231,7 @@ class Engine {
         this.renderer.setScissorTest( true );
         this.renderer.setClearColor( new Color( 0.5, 0.5, 0.7 ) );
         this.camera2.aspect = width / height;
-
         this.camera2.updateProjectionMatrix();
-        this.renderer.clear();
         this.renderer.render(this.scene, this.camera2)
 
         this.stats.update()
