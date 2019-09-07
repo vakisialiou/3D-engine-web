@@ -11,7 +11,6 @@ import {
 class Shape extends Mesh {
     constructor() {
         super()
-        // this.type = Shape.name
     }
 
     /**
