@@ -4,12 +4,12 @@
  */
 
 import {
-	Euler,
 	EventDispatcher,
 	Vector3
 } from 'three'
 
 import Object3DFollower from './../Helpers/Object3DFollower'
+import Object3DPusher from './../Helpers/Object3DPusher'
 import Object3DRoller from './../Helpers/Object3DRoller'
 import CameraFollower from './../Helpers/CameraFollower'
 import Object3DStep from './../Helpers/Object3DStep'
@@ -23,6 +23,7 @@ var PointerLockControls = function ( person, camera, domElement ) {
 	var personFollower = new Object3DFollower(person, 4.5)
 	var cameraFollower = new CameraFollower(camera)
 	var cameraRoller = new Object3DRoller(person, camera, camera.position.z)
+	var personPusher = new Object3DPusher(person)
 	//
 	// internals
 	//
@@ -33,22 +34,12 @@ var PointerLockControls = function ( person, camera, domElement ) {
 	var lockEvent = { type: 'lock' };
 	var unlockEvent = { type: 'unlock' };
 
-    var tmp = new Vector3()//.copy(person.position)
 	var interval = camera.position.z
 
-
-	var eulerPerson = new Euler( 0, 0, 0, 'YXZ' );
-    var eulerCamera = new Euler( 0, 0, 0, 'YXZ' );
-
-	var PI_2 = Math.PI / 2;
-
-	var vec = new Vector3();
-
-
-
 	function onMouseMove( event ) {
-
-		if ( scope.isLocked === false ) return;
+		if ( scope.isLocked === false ) {
+			return
+		}
 
 		cameraFollower.onMouseMove(event)
 
@@ -100,9 +91,7 @@ var PointerLockControls = function ( person, camera, domElement ) {
 	};
 
 	this.dispose = function () {
-
 		this.disconnect();
-
 	};
 
 	this.getObject = function () { // retaining this method for backward compatibility
@@ -138,36 +127,19 @@ var PointerLockControls = function ( person, camera, domElement ) {
     }();
 
 	this.moveForward = function ( distance ) {
-
-		// move forward parallel to the xz-plane
-		// assumes person.up is y-up
-
-		vec.setFromMatrixColumn( person.matrix, 0 );
-
-		vec.crossVectors( person.up, vec );
-
-        person.position.addScaledVector( vec, distance );
-
+		personPusher.moveForward(distance)
 	};
 
 	this.moveRight = function ( distance ) {
-
-		vec.setFromMatrixColumn( person.matrix, 0 );
-
-        person.position.addScaledVector( vec, distance );
-
+		personPusher.moveRight(distance)
 	};
 
 	this.lock = function () {
-
 		this.domElement.requestPointerLock();
-
 	};
 
 	this.unlock = function () {
-
 		document.exitPointerLock();
-
 	};
 
 	this.updateCamera = function (delta) {
