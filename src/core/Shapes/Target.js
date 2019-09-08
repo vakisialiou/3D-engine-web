@@ -22,7 +22,8 @@ class Target extends Sprite {
      */
     load(path) {
         this.material = new SpriteMaterial({
-            transparent: true ,
+            depthTest: false,
+            depthWrite: false,
             blending: AdditiveBlending,
             map: new TextureLoader().load(path)
         })

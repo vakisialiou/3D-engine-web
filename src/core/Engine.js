@@ -114,7 +114,7 @@ class Engine {
 
 
         this.target = new Target().load('textures/target.png')
-        this.target.setSize(20)
+        this.target.setSize(40)
         this.target.position.z = - 600
         this.camera.add(this.target)
         this.scene.add(this.camera)
