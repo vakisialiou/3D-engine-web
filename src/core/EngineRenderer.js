@@ -100,6 +100,7 @@ class EngineRenderer extends WebGLRenderer {
     /**
      *
      * @param {PerspectiveCamera} camera
+     * @returns {void}
      */
     resize(camera) {
         camera.aspect = this.width / this.height

@@ -129,6 +129,9 @@ class Engine {
                         case PersonControls.ACTION_STOP:
                             this.personAnimation.stop()
                             break
+                        case PersonControls.ACTION_WALK:
+                            this.personAnimation.walk()
+                            break
                         case PersonControls.ACTION_RUN:
                             this.personAnimation.run()
                             break
@@ -141,7 +144,6 @@ class Engine {
                 this.updates.push({
                     update: (delta) => {
                         this.personControls.update(delta)
-
                         this.cameraMap.position.x = this.personAnimation.position.x
                         this.cameraMap.position.y = this.personAnimation.position.y + 70
                         this.cameraMap.position.z = this.personAnimation.position.z + 100

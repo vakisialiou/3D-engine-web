@@ -15,6 +15,9 @@ class PersonControls extends EventDispatcher {
     constructor(person, camera, domElement) {
         super()
 
+        this.walkSpeed = 400.0
+        this.runSpeed = 800.0
+
         /**
          *
          * @type {Object3D}
@@ -119,6 +122,12 @@ class PersonControls extends EventDispatcher {
 
         /**
          *
+         * @type {boolean}
+         */
+        this.canRun = false
+
+        /**
+         *
          * @type {{canMoveLeft: number[], canMoveBackward: number[], canMoveRight: number[], canMoveForward: number[], canJump: number[]}}
          */
         this.keyboard = {
@@ -140,6 +149,9 @@ class PersonControls extends EventDispatcher {
             ],
             canJump: [
                 32 /*space*/
+            ],
+            canRun: [
+                16, /* shift */
             ]
         }
 
@@ -212,6 +224,7 @@ class PersonControls extends EventDispatcher {
             case 'canMoveBackward':
             case 'canMoveLeft':
             case 'canMoveRight':
+            case 'canRun':
                 this[property] = true
                 break
             case 'canJump':
@@ -235,6 +248,7 @@ class PersonControls extends EventDispatcher {
             case 'canMoveLeft':
             case 'canMoveRight':
             case 'canJump':
+            case 'canRun':
                 this[property] = false
                 break
         }
@@ -331,14 +345,18 @@ class PersonControls extends EventDispatcher {
             this.direction.x = Number(this.canMoveRight) - Number(this.canMoveLeft)
 
             this.direction.normalize() // this ensures consistent movements in all directions
+
+            const speed = this.canRun ? this.runSpeed : this.walkSpeed
+            const actionName = this.canRun ? PersonControls.ACTION_RUN : PersonControls.ACTION_WALK
+
             if (this.canMoveForward || this.canMoveBackward) {
-                this.velocity.z -= this.direction.z * 800.0 * delta
-                this.actionName = PersonControls.ACTION_RUN
+                this.velocity.z -= this.direction.z * speed * delta
+                this.actionName = actionName
             }
 
             if (this.canMoveLeft || this.canMoveRight) {
-                this.velocity.x -= this.direction.x * 800.0 * delta
-                this.actionName = PersonControls.ACTION_RUN
+                this.velocity.x -= this.direction.x * speed * delta
+                this.actionName = actionName
             }
 
             if (!this.canMoveForward && !this.canMoveBackward && !this.canMoveLeft && !this.canMoveRight) {
@@ -361,7 +379,7 @@ class PersonControls extends EventDispatcher {
                 this.person.position.y = 0
                 this.canJump = true
             } else {
-                this.actionName = PersonControls.ACTION_STOP
+                this.actionName = PersonControls.ACTION_JUMP
             }
 
             this.camera.position.y = this.person.position.y + h
@@ -383,6 +401,10 @@ class PersonControls extends EventDispatcher {
 
     static get ACTION_STOP() {
         return 'stop'
+    }
+
+    static get ACTION_WALK() {
+        return 'walk'
     }
 
     static get ACTION_RUN() {
