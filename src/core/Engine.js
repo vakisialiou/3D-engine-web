@@ -1,11 +1,9 @@
 import {
     Fog,
-    Euler,
     Color,
     Clock,
     Scene,
     Vector3,
-    WebGLRenderer,
     HemisphereLight,
     DirectionalLight,
     PerspectiveCamera,
@@ -15,11 +13,12 @@ import {
 import SkyDome from './SkyDome'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import PersonControls from './Controls/PersonControls'
+import PersonAnimation from './Controls/PersonAnimation'
 import Stats from 'three/examples/jsm/libs/stats.module'
 import { GUI } from 'three/examples/jsm/libs/dat.gui.module'
 import Shape from './Helpers/Shape'
-import AnimationControls from './Controls/AnimationControls'
 import Storage from './../lib/Storage'
+import EngineRenderer from './EngineRenderer'
 
 const gui = new GUI();
 
@@ -44,17 +43,11 @@ class Engine {
         const height = window.innerHeight;
 
         this.camera = new PerspectiveCamera(60, width / height, 1, 5000)
-        // this.camera.position.set(0, 30, 250)
         this.camera.position.set(0, 40, 80)
 
-        this.camera2 = new PerspectiveCamera(30, 1, 1, 5000);
-        this.camera2.position.set(-200, 600, -200);
-        this.camera2.lookAt(new Vector3())
+        this.cameraMap = new PerspectiveCamera(40, 1, 1, 500)
 
-        this.renderer = new WebGLRenderer({
-            antialias: true,
-            alpha: true
-        })
+        this.renderer = new EngineRenderer()
 
         this.scene.background = new Color().setHSL(0.6, 0, 1)
         this.scene.fog = new Fog(this.scene.background, 1, 3000)
@@ -111,34 +104,36 @@ class Engine {
         this.sky = new SkyDome()
         this.scene.add(this.sky)
 
-        this.person = null
         this.personControls = null
+        this.personAnimation = null
 
         const folder = gui.addFolder('Small camera')
-        folder.add(this.camera2.position, 'x', -500, 500)
-        folder.add(this.camera2.position, 'y', 100, 1000)
-        folder.add(this.camera2.position, 'z', -500, 500)
+        folder.add(this.cameraMap.position, 'x', -500, 500)
+        folder.add(this.cameraMap.position, 'y', 100, 1000)
+        folder.add(this.cameraMap.position, 'z', -500, 500)
 
     }
 
-    initGraph() {
+    loadPerson() {
         return new Promise((resolve) => {
             // PERSON
             const loader = new GLTFLoader()
             loader.load('models/Soldier.glb', (gltf) => {
-                this.person = new AnimationControls(gltf).activateAllActions()
-                this.personControls = new PersonControls(this.person, this.camera, this.renderer.domElement)
-                this.personControls.registerEventListeners()
+                this.personAnimation = new PersonAnimation(gltf).activateAllActions()
+                this.personControls = new PersonControls(this.personAnimation, this.camera, this.renderer.domElement).registerEventListeners()
 
-                this.scene.add(this.person)
+                this.scene.add(this.personAnimation)
 
                 this.personControls.addEventListener('action', (event) => {
                     switch (event.actionName) {
-                        case 'stop':
-                            this.person.stop()
+                        case PersonControls.ACTION_STOP:
+                            this.personAnimation.stop()
                             break
-                        case 'run':
-                            this.person.run()
+                        case PersonControls.ACTION_RUN:
+                            this.personAnimation.run()
+                            break
+                        case PersonControls.ACTION_JUMP:
+                            this.personAnimation.jump()
                             break
                     }
                 })
@@ -147,12 +142,12 @@ class Engine {
                     update: (delta) => {
                         this.personControls.update(delta)
 
-                        this.camera2.position.x = this.person.position.x
-                        this.camera2.position.y = this.person.position.y + 100
-                        this.camera2.position.z = this.person.position.z + 100
-                        this.camera2.lookAt(this.person.position)
-                        this.sky.position.copy(this.person.position)
-                        this.person.update(delta)
+                        this.cameraMap.position.x = this.personAnimation.position.x
+                        this.cameraMap.position.y = this.personAnimation.position.y + 70
+                        this.cameraMap.position.z = this.personAnimation.position.z + 100
+                        this.cameraMap.lookAt(this.personAnimation.position)
+                        this.sky.position.copy(this.personAnimation.position)
+                        this.personAnimation.update(delta)
                     }
                 })
 
@@ -166,20 +161,10 @@ class Engine {
      * @param {Element} container
      * @returns {Engine}
      */
-    render(container) {
-
+    initGraph(container) {
+        this.renderer.start(this.camera)
         container.appendChild(this.stats.dom)
-
-        this.renderer.setPixelRatio(window.devicePixelRatio)
-        this.renderer.setSize(window.innerWidth, window.innerHeight)
-
         container.appendChild(this.renderer.domElement)
-
-        this.renderer.gammaInput = true
-        this.renderer.gammaOutput = true
-        // this.renderer.shadowMap.enabled = true
-
-        window.addEventListener('resize', () => this.onWindowResize(), false )
         return this
     }
 
@@ -201,47 +186,16 @@ class Engine {
             item.update(delta)
         }
 
-        let windowWidth = window.innerWidth;
-        let windowHeight = window.innerHeight;
+        this.renderer
+            .setWindowSize(window.innerWidth, window.innerHeight)
+            .update(this.scene, this.camera)
 
-        let left = Math.floor( 0 );
-        let bottom = Math.floor( 0 );
-        let width = Math.floor( windowWidth );
-        let height = Math.floor( windowHeight );
-
-        this.renderer.setViewport( left, bottom, width, height );
-        this.renderer.setScissor( left, bottom, width, height );
-        this.renderer.setScissorTest( true );
-        this.renderer.setClearColor( new Color( 0.5, 0.5, 0.7 ) );
-        this.camera.aspect = width / height;
-        this.camera.updateProjectionMatrix();
-        this.renderer.render(this.scene, this.camera)
-
-
-        windowWidth = window.innerHeight;
-        windowHeight = window.innerHeight;
-
-        left = Math.floor( 0 );
-        bottom = Math.floor( windowHeight - (windowHeight * 0.3) );
-        width = Math.floor( windowWidth * 0.3 );
-        height = Math.floor( windowHeight * 0.3 );
-
-        this.renderer.setViewport( left, bottom, width, height );
-        this.renderer.setScissor( left, bottom, width, height );
-        this.renderer.setScissorTest( true );
-        this.renderer.setClearColor( new Color( 0.5, 0.5, 0.7 ) );
-        this.camera2.aspect = width / height;
-        this.camera2.updateProjectionMatrix();
-        this.renderer.render(this.scene, this.camera2)
+        this.renderer
+            .setWindowSize(200, 200)
+            .update(this.scene, this.cameraMap)
 
         this.stats.update()
         return this
-    }
-
-    onWindowResize() {
-        this.camera.aspect = window.innerWidth / window.innerHeight
-        this.camera.updateProjectionMatrix()
-        this.renderer.setSize(window.innerWidth, window.innerHeight)
     }
 }
 

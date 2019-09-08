@@ -1,9 +1,10 @@
 import { AnimationMixer, Group } from 'three'
 
 const ACTION_STOP = 'stop'
+const ACTION_JUMP = 'jump'
 const ACTION_RUN = 'run'
 
-class AnimationControls extends Group {
+class PersonAnimation extends Group {
     constructor(gltf) {
         super()
 
@@ -34,9 +35,15 @@ class AnimationControls extends Group {
 
         /**
          *
+         * @type {AnimationAction}
+         */
+        this.jumpAction = this.mixer.clipAction(gltf.animations[2])
+
+        /**
+         *
          * @type {AnimationAction[]}
          */
-        this.actions = [this.idleAction, this.runAction]
+        this.actions = [this.idleAction, this.runAction, this.jumpAction]
 
         /**
          *
@@ -61,6 +68,17 @@ class AnimationControls extends Group {
         return this
     }
 
+    jump() {
+        if (this.actionName === ACTION_STOP) {
+            this.prepareCrossFade(this.idleAction, this.jumpAction, 0.1)
+            this.actionName = ACTION_JUMP
+        } else if (this.actionName === ACTION_RUN) {
+            this.prepareCrossFade(this.runAction, this.jumpAction, 0.1)
+            this.actionName = ACTION_JUMP
+        }
+        return this
+    }
+
     prepareCrossFade(startAction, endAction, duration) {
         this.unPauseAllActions();
         this.executeCrossFade(startAction, endAction, duration)
@@ -70,6 +88,7 @@ class AnimationControls extends Group {
     activateAllActions() {
         this.setWeight(this.idleAction, 1)
         this.setWeight(this.runAction, 0)
+        this.setWeight(this.jumpAction, 0)
         this.actions.forEach(action => action.play())
         return this
     }
@@ -101,4 +120,4 @@ class AnimationControls extends Group {
     }
 }
 
-export default AnimationControls
+export default PersonAnimation

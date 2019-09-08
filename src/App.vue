@@ -22,8 +22,8 @@ export default {
   },
   mounted() {
     const engine = new Engine()
-      engine.initGraph().then(() => {
-          engine.render(this.$el).animate()
+      engine.loadPerson().then(() => {
+          engine.initGraph(this.$el).animate()
 
           this.instructions = document.getElementById('instructions')
           this.instructions.addEventListener('click', () => {

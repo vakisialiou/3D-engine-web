@@ -333,16 +333,16 @@ class PersonControls extends EventDispatcher {
             this.direction.normalize() // this ensures consistent movements in all directions
             if (this.canMoveForward || this.canMoveBackward) {
                 this.velocity.z -= this.direction.z * 800.0 * delta
-                this.actionName = 'run'
+                this.actionName = PersonControls.ACTION_RUN
             }
 
             if (this.canMoveLeft || this.canMoveRight) {
                 this.velocity.x -= this.direction.x * 800.0 * delta
-                this.actionName = 'run'
+                this.actionName = PersonControls.ACTION_RUN
             }
 
             if (!this.canMoveForward && !this.canMoveBackward && !this.canMoveLeft && !this.canMoveRight) {
-                this.actionName = 'stop'
+                this.actionName = PersonControls.ACTION_STOP
             }
 
             if (this.canMoveLeft || this.canMoveRight) {
@@ -361,7 +361,7 @@ class PersonControls extends EventDispatcher {
                 this.person.position.y = 0
                 this.canJump = true
             } else {
-                this.actionName = 'stop'
+                this.actionName = PersonControls.ACTION_STOP
             }
 
             this.camera.position.y = this.person.position.y + h
@@ -373,12 +373,24 @@ class PersonControls extends EventDispatcher {
             }
 
         } else {
-            this.actionName = 'stop'
+            this.actionName = PersonControls.ACTION_STOP
         }
 
         if (prevActionName && prevActionName !== this.actionName) {
             this.dispatchEvent({ type: 'action', actionName: this.actionName, prevActionName })
         }
+    }
+
+    static get ACTION_STOP() {
+        return 'stop'
+    }
+
+    static get ACTION_RUN() {
+        return 'run'
+    }
+
+    static get ACTION_JUMP() {
+        return 'jump'
     }
 }
 
