@@ -17,6 +17,7 @@ class PersonControls extends EventDispatcher {
 
         this.walkSpeed = 400.0
         this.runSpeed = 800.0
+        this.jumpHeight = 350
 
         /**
          *
@@ -186,7 +187,7 @@ class PersonControls extends EventDispatcher {
         }
 
         this.cameraFollower.onMouseMove(event)
-        const target = this.cameraNextStep.get(- this.interval)
+        const target = this.cameraNextStep.get( - this.interval)
         this.personFollower.setTarget(target)
         this.dispatchEvent({ type: 'change' })
     }
@@ -229,7 +230,7 @@ class PersonControls extends EventDispatcher {
                 break
             case 'canJump':
                 if (this.canJump === true) {
-                    this.velocity.y += 350
+                    this.velocity.y += this.jumpHeight
                 }
                 this.canJump = false
                 break

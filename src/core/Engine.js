@@ -3,7 +3,6 @@ import {
     Color,
     Clock,
     Scene,
-    Vector3,
     HemisphereLight,
     DirectionalLight,
     PerspectiveCamera,
@@ -12,13 +11,14 @@ import {
 } from 'three'
 import SkyDome from './SkyDome'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
+import { GUI } from 'three/examples/jsm/libs/dat.gui.module'
 import PersonControls from './Controls/PersonControls'
 import PersonAnimation from './Controls/PersonAnimation'
 import Stats from 'three/examples/jsm/libs/stats.module'
-import { GUI } from 'three/examples/jsm/libs/dat.gui.module'
-import Shape from './Helpers/Shape'
-import Storage from './../lib/Storage'
 import EngineRenderer from './EngineRenderer'
+import Storage from './../lib/Storage'
+import Shape from './Helpers/Shape'
+import Target from './Shapes/Target'
 
 const gui = new GUI();
 
@@ -112,6 +112,12 @@ class Engine {
         folder.add(this.cameraMap.position, 'y', 100, 1000)
         folder.add(this.cameraMap.position, 'z', -500, 500)
 
+
+        this.target = new Target().load('textures/target.png')
+        this.target.setSize(20)
+        this.target.position.z = - 600
+        this.camera.add(this.target)
+        this.scene.add(this.camera)
     }
 
     loadPerson() {
