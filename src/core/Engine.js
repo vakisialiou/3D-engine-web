@@ -118,6 +118,17 @@ class Engine {
         this.target.position.z = - 600
         this.camera.add(this.target)
         this.scene.add(this.camera)
+
+        setInterval(() => {
+            let i = 0
+            const ss = setInterval(() => {
+                i++
+                this.target.vibrate()
+                if (i === 20) {
+                    clearInterval(ss)
+                }
+            }, 100)
+        }, 5000)
     }
 
     loadPerson() {
@@ -156,6 +167,7 @@ class Engine {
                         this.cameraMap.lookAt(this.personAnimation.position)
                         this.sky.position.copy(this.personAnimation.position)
                         this.personAnimation.update(delta)
+                        this.target.update()
                     }
                 })
 

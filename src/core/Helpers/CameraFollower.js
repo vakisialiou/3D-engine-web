@@ -22,13 +22,13 @@ class CameraFollower {
          *
          * @type {number}
          */
-        this.maxTop = Math.PI / 2 / 10
+        this.maxTop = Math.PI / 10
 
         /**
          *
          * @type {number}
          */
-        this.maxBottom = Math.PI / 2 / 6
+        this.maxBottom = Math.PI / 7
     }
 
     /**
