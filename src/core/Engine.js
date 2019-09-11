@@ -104,6 +104,7 @@ class Engine {
         this.sky = new SkyDome()
         this.scene.add(this.sky)
 
+        this.target = null
         this.personControls = null
         this.personAnimation = null
 
@@ -111,24 +112,6 @@ class Engine {
         folder.add(this.cameraMap.position, 'x', -500, 500)
         folder.add(this.cameraMap.position, 'y', 100, 1000)
         folder.add(this.cameraMap.position, 'z', -500, 500)
-
-
-        this.target = new Target().load('textures/target.png')
-        this.target.setSize(40)
-        this.target.position.z = - 600
-        this.camera.add(this.target)
-        this.scene.add(this.camera)
-
-        setInterval(() => {
-            let i = 0
-            const ss = setInterval(() => {
-                i++
-                this.target.vibrate()
-                if (i === 20) {
-                    clearInterval(ss)
-                }
-            }, 100)
-        }, 5000)
     }
 
     loadPerson() {
@@ -136,9 +119,12 @@ class Engine {
             // PERSON
             const loader = new GLTFLoader()
             loader.load('models/Soldier.glb', (gltf) => {
+                this.target = new Target().load('textures/target.png')
+                this.target.setSize(25)
+                this.scene.add(this.target)
+
                 this.personAnimation = new PersonAnimation(gltf).activateAllActions()
                 this.personControls = new PersonControls(this.personAnimation, this.camera, this.renderer.domElement).registerEventListeners()
-
                 this.scene.add(this.personAnimation)
 
                 this.personControls.addEventListener('action', (event) => {
@@ -161,13 +147,13 @@ class Engine {
                 this.updates.push({
                     update: (delta) => {
                         this.personControls.update(delta)
+                        this.target.position.copy(this.personControls.targetPosition)
                         this.cameraMap.position.x = this.personAnimation.position.x
                         this.cameraMap.position.y = this.personAnimation.position.y + 70
                         this.cameraMap.position.z = this.personAnimation.position.z + 100
                         this.cameraMap.lookAt(this.personAnimation.position)
                         this.sky.position.copy(this.personAnimation.position)
                         this.personAnimation.update(delta)
-                        this.target.update()
                     }
                 })
 

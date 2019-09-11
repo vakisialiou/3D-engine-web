@@ -38,7 +38,7 @@ class Shape extends Mesh {
 
     /**
      *
-     * @param {Number} color
+     * @param {number} color
      * @returns {Shape}
      */
     setColorMaterial(color) {

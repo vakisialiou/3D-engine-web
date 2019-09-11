@@ -35,7 +35,19 @@ class PersonControls extends EventDispatcher {
          *
          * @type {number}
          */
-        this.interval = camera.position.distanceTo(person.position) * 2
+        this.targetDistance = 900
+
+        /**
+         *
+         * @type {number}
+         */
+        this.targetHeigth = 20
+
+        /**
+         *
+         * @type {Vector3}
+         */
+        this.targetPosition = new Vector3()
 
         /**
          *
@@ -54,6 +66,12 @@ class PersonControls extends EventDispatcher {
          * @type {Object3DStep}
          */
         this.cameraNextStep = new Object3DStep(camera)
+
+        /**
+         *
+         * @type {Object3DStep}
+         */
+        this.personTarget = new Object3DStep(person)
 
         /**
          *
@@ -187,7 +205,7 @@ class PersonControls extends EventDispatcher {
         }
 
         this.cameraFollower.onMouseMove(event)
-        const target = this.cameraNextStep.get( - this.interval)
+        const target = this.cameraNextStep.get( - this.targetDistance)
         this.personFollower.setTarget(target)
         this.dispatchEvent({ type: 'change' })
     }
@@ -384,6 +402,9 @@ class PersonControls extends EventDispatcher {
             }
 
             this.camera.position.y = this.person.position.y + h
+
+            const target = this.personTarget.get(this.targetDistance)
+            this.targetPosition.copy(target).setY(this.targetHeigth)
 
             this.cameraRoller.update(delta)
 
