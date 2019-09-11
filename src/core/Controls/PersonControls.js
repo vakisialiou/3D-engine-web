@@ -176,10 +176,11 @@ class PersonControls extends EventDispatcher {
 
         /**
          *
-         * @type {{active: boolean, keyUpEvent: (Function|null), keyDownEvent: (Function|null), pointerLockErrorEvent: (Function|null), pointerLockChangeEvent: Function|null, mouseMoveEvent: Function|null}}
+         * @type {{active: boolean, clickEvent: (Function|null), keyUpEvent: (Function|null), keyDownEvent: (Function|null), pointerLockErrorEvent: (Function|null), pointerLockChangeEvent: Function|null, mouseMoveEvent: Function|null}}
          */
         this.register = {
             active: false,
+            clickEvent: null,
             keyUpEvent: null,
             keyDownEvent: null,
             mouseMoveEvent: null,
@@ -275,6 +276,15 @@ class PersonControls extends EventDispatcher {
 
     /**
      *
+     * @param {MouseEvent} event
+     * @returns {void}
+     */
+    onClick(event) {
+        this.dispatchEvent({ type: 'action', actionName: PersonControls.ACTION_SHOT, event })
+    }
+
+    /**
+     *
      * @returns {string|null|?}
      */
     getKeyBoardProperty(event) {
@@ -315,6 +325,7 @@ class PersonControls extends EventDispatcher {
     registerEventListeners() {
         this.unregisterEventListeners()
         this.register.active = true
+        this.register.clickEvent = (event) => this.onClick(event)
         this.register.keyUpEvent = (event) => this.onKeyUp(event)
         this.register.keyDownEvent = (event) => this.onKeyDown(event)
         this.register.mouseMoveEvent = (event) => this.onMouseMove(event)
@@ -326,6 +337,7 @@ class PersonControls extends EventDispatcher {
         document.addEventListener('mousemove', this.register.mouseMoveEvent, false)
         document.addEventListener('pointerlockerror', this.register.pointerLockErrorEvent, false)
         document.addEventListener('pointerlockchange', this.register.pointerLockChangeEvent, false)
+        this.domElement.addEventListener('click', this.register.clickEvent, false)
         return this
     }
 
@@ -340,8 +352,10 @@ class PersonControls extends EventDispatcher {
             document.removeEventListener('mousemove', this.register.mouseMoveEvent, false)
             document.removeEventListener('pointerlockerror', this.register.pointerLockErrorEvent, false)
             document.removeEventListener('pointerlockchange', this.register.pointerLockChangeEvent, false)
+            this.domElement.removeEventListener('click', this.register.clickEvent, false)
 
             this.register.active = false
+            this.register.clickEvent = null
             this.register.keyUpEvent = null
             this.register.keyDownEvent = null
             this.register.mouseMoveEvent = null
@@ -383,11 +397,11 @@ class PersonControls extends EventDispatcher {
             }
 
             if (this.canMoveLeft || this.canMoveRight) {
-                this.personPusher.moveRight(-this.velocity.x * delta)
+                this.personPusher.moveRight(- this.velocity.x * delta)
             }
 
             if (this.canMoveForward || this.canMoveBackward) {
-                this.personPusher.moveForward(-this.velocity.z * delta)
+                this.personPusher.moveForward(- this.velocity.z * delta)
             }
 
             const h = this.camera.position.y - this.person.position.y
@@ -417,7 +431,7 @@ class PersonControls extends EventDispatcher {
         }
 
         if (prevActionName && prevActionName !== this.actionName) {
-            this.dispatchEvent({ type: 'action', actionName: this.actionName, prevActionName })
+            this.dispatchEvent({ type: 'action', actionName: this.actionName })
         }
     }
 
@@ -435,6 +449,10 @@ class PersonControls extends EventDispatcher {
 
     static get ACTION_JUMP() {
         return 'jump'
+    }
+
+    static get ACTION_SHOT() {
+        return 'shot'
     }
 }
 

@@ -12,6 +12,7 @@ import {
 import SkyDome from './SkyDome'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { GUI } from 'three/examples/jsm/libs/dat.gui.module'
+import PersonShot from './Controls/PersonShot'
 import PersonControls from './Controls/PersonControls'
 import PersonAnimation from './Controls/PersonAnimation'
 import Stats from 'three/examples/jsm/libs/stats.module'
@@ -105,6 +106,7 @@ class Engine {
         this.scene.add(this.sky)
 
         this.target = null
+        this.personShot = null
         this.personControls = null
         this.personAnimation = null
 
@@ -127,6 +129,8 @@ class Engine {
                 this.personControls = new PersonControls(this.personAnimation, this.camera, this.renderer.domElement).registerEventListeners()
                 this.scene.add(this.personAnimation)
 
+                this.personShot = new PersonShot(this.personAnimation, this.scene)
+
                 this.personControls.addEventListener('action', (event) => {
                     switch (event.actionName) {
                         case PersonControls.ACTION_STOP:
@@ -141,6 +145,9 @@ class Engine {
                         case PersonControls.ACTION_JUMP:
                             this.personAnimation.jump()
                             break
+                        case PersonControls.ACTION_SHOT:
+                            this.personShot.fire(this.personAnimation.position, this.personControls.targetPosition)
+                            break
                     }
                 })
 
@@ -154,6 +161,7 @@ class Engine {
                         this.cameraMap.lookAt(this.personAnimation.position)
                         this.sky.position.copy(this.personAnimation.position)
                         this.personAnimation.update(delta)
+                        this.personShot.update(delta)
                     }
                 })
 
