@@ -1,43 +1,68 @@
-import Shape from './../Helpers/Shape'
-import Object3DDirection from './../Helpers/Object3DDirection'
-import { Vector3 } from 'three'
+import SingleShot from './Shot/SingleShot'
 
 class PersonShot {
     /**
      *
+     * @param {Object3D} person
      * @param {Scene} scene
      */
     constructor(person, scene) {
+        /**
+         *
+         * @type {Object3D}
+         */
         this.person =  person
+
         /**
          *
          * @type {Scene}
          */
         this.scene = scene
 
+        /**
+         *
+         * @type {Array.<Object3D|SingleShot>}
+         */
         this.shots = []
     }
 
     fire(position, target) {
-        const model = new Shape()
-        model.setColorMaterial(0xFF0000)
-        model.cube(5)
-        model.position.copy(position).add(new Vector3(0, 25, 0))
-        model.rotation.copy(this.person.rotation)
-        this.scene.add(model)
-
-        this.shots.push({
-            model: model,
-            direction: new Object3DDirection(model).get().clone(),
-            velocity: new Vector3(0, 0, 1200)
-        })
-
+        const model = new SingleShot(this.person).render()
+            .destroy(() => this.remove(model))
+        this.add(model)
     }
 
+    /**
+     *
+     * @param {Object3D|SingleShot} model
+     * @returns {void}
+     */
+    remove(model) {
+        this.scene.remove(model)
+        const index = this.shots.indexOf(model)
+        if (index !== -1) {
+            this.shots.splice(index, 1)
+        }
+    }
+
+    /**
+     *
+     * @param {Object3D|SingleShot} model
+     * @returns {void}
+     */
+    add(model) {
+        this.scene.add(model)
+        this.shots.push(model)
+    }
+
+    /**
+     *
+     * @param {number} delta
+     * @returns {void}
+     */
     update(delta) {
-        for (const shot of this.shots) {
-            const z = shot.velocity.z * 100.0 * delta
-            shot.model.position.addScaledVector(shot.direction, z * delta)
+        for (const model of this.shots) {
+            model.update(delta)
         }
     }
 }
