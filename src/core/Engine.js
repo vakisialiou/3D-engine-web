@@ -122,14 +122,27 @@ class Engine {
             const loader = new GLTFLoader()
             loader.load('models/Soldier.glb', (gltf) => {
                 this.target = new Target().load('textures/target.png')
-                this.target.setSize(25)
+                this.target.setSize(35)
                 this.scene.add(this.target)
 
                 this.personAnimation = new PersonAnimation(gltf).activateAllActions()
                 this.personControls = new PersonControls(this.personAnimation, this.camera, this.renderer.domElement).registerEventListeners()
+
+                this.personControls.addEventListener('lock', () => {
+                    this.target.show()
+                })
+
+                this.personControls.addEventListener('unlock', () => {
+                    this.target.hide()
+                })
+
                 this.scene.add(this.personAnimation)
 
                 this.personShot = new PersonShot(this.personAnimation, this.scene)
+                this.personShot.onHit((data) => {
+                    const model = data.intersections[0]['object']
+                    this.scene.remove(model)
+                })
 
                 this.personControls.addEventListener('action', (event) => {
                     switch (event.actionName) {
@@ -146,7 +159,10 @@ class Engine {
                             this.personAnimation.jump()
                             break
                         case PersonControls.ACTION_SHOT:
-                            this.personShot.fire(this.personAnimation.position, this.personControls.targetPosition)
+                            const intersectionObjects = this.scene.children.filter((object) => {
+                                return object instanceof Shape
+                            })
+                            this.personShot.fire(intersectionObjects)
                             break
                     }
                 })

@@ -1,7 +1,7 @@
 import Object3DDirection from '../../Helpers/Object3DDirection'
-import { Mesh, MeshBasicMaterial, Vector3, SphereBufferGeometry, EventDispatcher } from 'three'
+import { Mesh, MeshBasicMaterial, Vector3, SphereBufferGeometry, EventDispatcher, Raycaster } from 'three'
 
-class SingleShot extends Mesh {
+class SingleCharge extends Mesh {
     /**
      *
      * @param {Object3D} person
@@ -47,16 +47,46 @@ class SingleShot extends Mesh {
 
         /**
          *
+         * @type {Vector3}
+         */
+        this.prevPosition = new Vector3()
+
+        /**
+         *
          * @type {EventDispatcher}
          */
         this.event = new EventDispatcher()
 
+        /**
+         *
+         * @type {Raycaster}
+         */
+        this.raycaster = new Raycaster()
+
+        /**
+         *
+         * @type {boolean}
+         */
         this.enabled = true
     }
 
     /**
      *
-     * @returns {SingleShot}
+     * @param {Object3D[]} objects
+     * @param {boolean} [recursive]
+     * @returns {Intersection[]}
+     */
+    findIntersection(objects, recursive = false) {
+        this.raycaster.ray.origin.copy(this.prevPosition)
+        this.raycaster.ray.direction.copy(this.direction)
+        this.raycaster.near = 0
+        this.raycaster.far = this.prevPosition.distanceTo(this.position)
+        return this.raycaster.intersectObjects(objects, recursive)
+    }
+
+    /**
+     *
+     * @returns {SingleCharge}
      */
     render() {
         this.position.copy(this.startPosition)
@@ -68,10 +98,20 @@ class SingleShot extends Mesh {
     /**
      *
      * @param {Function} callback
-     * @returns {SingleShot}
+     * @returns {SingleCharge}
      */
     destroy(callback) {
         this.event.addEventListener('destroy', callback)
+        return this
+    }
+
+   /**
+     *
+     * @param {Function} callback
+     * @returns {SingleCharge}
+     */
+   change(callback) {
+        this.event.addEventListener('change', callback)
         return this
     }
 
@@ -85,8 +125,11 @@ class SingleShot extends Mesh {
             return
         }
 
+        this.prevPosition.copy(this.position)
         const speed = this.speed * 100.0 * delta
         this.position.addScaledVector(this.direction, speed * delta)
+        this.event.dispatchEvent({ type: 'change' })
+
         if (this.startPosition.distanceTo(this.position) >= this.maxDistance) {
             this.event.dispatchEvent({ type: 'destroy' })
             this.enabled = false
@@ -94,4 +137,4 @@ class SingleShot extends Mesh {
     }
 }
 
-export default SingleShot
+export default SingleCharge

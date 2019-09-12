@@ -7,6 +7,26 @@ class Target extends Sprite {
 
     /**
      *
+     * @returns {Target}
+     */
+    hide() {
+        this.material.opacity = 0
+        this.material.needsUpdate = true
+        return this
+    }
+
+    /**
+     *
+     * @returns {Target}
+     */
+    show() {
+        this.material.opacity = 1
+        this.material.needsUpdate = true
+        return this
+    }
+
+    /**
+     *
      * @param {number} value
      * @returns {Target}
      */
@@ -25,7 +45,9 @@ class Target extends Sprite {
             depthTest: false,
             depthWrite: false,
             blending: AdditiveBlending,
-            map: new TextureLoader().load(path)
+            map: new TextureLoader().load(path),
+            transparent: true,
+            opacity: 0
         })
         return this
     }

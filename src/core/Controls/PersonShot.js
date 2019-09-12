@@ -1,4 +1,5 @@
-import SingleShot from './Shot/SingleShot'
+import SingleCharge from './Charge/SingleCharge'
+import {EventDispatcher} from 'three'
 
 class PersonShot {
     /**
@@ -11,7 +12,7 @@ class PersonShot {
          *
          * @type {Object3D}
          */
-        this.person =  person
+        this.person = person
 
         /**
          *
@@ -21,38 +22,73 @@ class PersonShot {
 
         /**
          *
-         * @type {Array.<Object3D|SingleShot>}
+         * @type {Array.<Object3D|SingleCharge>}
          */
-        this.shots = []
+        this.charges = []
+
+        /**
+         *
+         * @type {EventDispatcher}
+         */
+        this.event = new EventDispatcher()
     }
 
-    fire(position, target) {
-        const model = new SingleShot(this.person).render()
-            .destroy(() => this.remove(model))
-        this.add(model)
+    /**
+     * @param {Object} data
+     * @callback HitCallback
+     */
+
+    /**
+     *
+     * @param {HitCallback} hitCallback
+     * @returns {PersonShot}
+     */
+    onHit(hitCallback) {
+        this.event.addEventListener('hit', hitCallback)
+        return this
     }
 
     /**
      *
-     * @param {Object3D|SingleShot} model
+     * @param {Array.<Object3D>} intersectObjects
+     * @param {boolean} [recursive]
+     * @returns {PersonShot}
+     */
+    fire(intersectObjects, recursive = false) {
+        const model = new SingleCharge(this.person).render()
+            .destroy(() => this.removeCharge(model))
+            .change(() => {
+                const intersections = model.findIntersection(intersectObjects, recursive)
+                if (intersections.length > 0) {
+                    this.event.dispatchEvent({ type: 'hit', intersections })
+                    this.removeCharge(model)
+                }
+            })
+        this.addCharge(model)
+        return this
+    }
+
+    /**
+     *
+     * @param {SingleCharge} model
      * @returns {void}
      */
-    remove(model) {
+    removeCharge(model) {
         this.scene.remove(model)
-        const index = this.shots.indexOf(model)
+        const index = this.charges.indexOf(model)
         if (index !== -1) {
-            this.shots.splice(index, 1)
+            this.charges.splice(index, 1)
         }
     }
 
     /**
      *
-     * @param {Object3D|SingleShot} model
+     * @param {SingleCharge} model
      * @returns {void}
      */
-    add(model) {
+    addCharge(model) {
         this.scene.add(model)
-        this.shots.push(model)
+        this.charges.push(model)
     }
 
     /**
@@ -61,8 +97,8 @@ class PersonShot {
      * @returns {void}
      */
     update(delta) {
-        for (const model of this.shots) {
-            model.update(delta)
+        for (const charge of this.charges) {
+            charge.update(delta)
         }
     }
 }
