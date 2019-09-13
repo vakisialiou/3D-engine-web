@@ -1,96 +1,96 @@
 import { Vector3, Matrix4, Quaternion } from 'three'
 
 class Object3DFollower {
+  /**
+   * Плавное направление объекта в сторону цели с заданной скоростью.
+   *
+   * @param {Object3D} object
+   * @param {number} [speed]
+   * @param {boolean} [enabled]
+   */
+  constructor(object, speed = 0.5, enabled = true) {
     /**
-     * Плавное направление объекта в сторону цели с заданной скоростью.
      *
-     * @param {Object3D} object
-     * @param {number} [speed]
-     * @param {boolean} [enabled]
+     * @type {Object3D}
      */
-    constructor(object, speed = 0.5, enabled = true) {
-        /**
-         *
-         * @type {Object3D}
-         */
-        this.object = object
-
-        /**
-         *
-         * @type {number}
-         */
-        this.speed = speed
-
-        /**
-         *
-         * @type {boolean}
-         */
-        this.enabled = enabled
-
-        /**
-         *
-         * @type {Matrix4}
-         */
-        this.rotationMatrix = new Matrix4()
-
-        /**
-         *
-         * @type {Quaternion}
-         */
-        this.targetRotation = new Quaternion()
-    }
+    this.object = object
 
     /**
      *
-     * @param {boolean} [value]
-     * @returns {Object3DFollower}
+     * @type {number}
      */
-    enable(value = true) {
-        this.enabled = value
-        return this
-    }
+    this.speed = speed
 
     /**
      *
-     * @param {number} value
-     * @returns {Object3DFollower}
+     * @type {boolean}
      */
-    setSpeed(value) {
-        this.speed = value
-        return this
-    }
+    this.enabled = enabled
 
     /**
      *
-     * @param {Object|Vector3} vector
-     * @returns {Object3DFollower}
+     * @type {Matrix4}
      */
-    setTarget(vector) {
-        this.rotationMatrix.lookAt(vector, this.object.position, this.object.up)
-        this.targetRotation.setFromRotationMatrix(this.rotationMatrix)
-        return this
-    }
+    this.rotationMatrix = new Matrix4()
 
     /**
      *
-     * @param {number} delta
-     * @returns {void}
+     * @type {Quaternion}
      */
-    update(delta) {
-        if (!this.enabled) {
-            return
-        }
+    this.targetRotation = new Quaternion()
+  }
 
-        if (this.speed === 0) {
-            return
-        }
+  /**
+   *
+   * @param {boolean} [value]
+   * @returns {Object3DFollower}
+   */
+  enable(value = true) {
+    this.enabled = value
+    return this
+  }
 
-        if (this.object.quaternion.equals(this.targetRotation)) {
-            return
-        }
+  /**
+   *
+   * @param {number} value
+   * @returns {Object3DFollower}
+   */
+  setSpeed(value) {
+    this.speed = value
+    return this
+  }
 
-        this.object.quaternion.rotateTowards(this.targetRotation, this.speed * delta)
+  /**
+   *
+   * @param {Object|Vector3} vector
+   * @returns {Object3DFollower}
+   */
+  setTarget(vector) {
+    this.rotationMatrix.lookAt(vector, this.object.position, this.object.up)
+    this.targetRotation.setFromRotationMatrix(this.rotationMatrix)
+    return this
+  }
+
+  /**
+   *
+   * @param {number} delta
+   * @returns {void}
+   */
+  update(delta) {
+    if (!this.enabled) {
+      return
     }
+
+    if (this.speed === 0) {
+      return
+    }
+
+    if (this.object.quaternion.equals(this.targetRotation)) {
+      return
+    }
+
+    this.object.quaternion.rotateTowards(this.targetRotation, this.speed * delta)
+  }
 }
 
 export default Object3DFollower

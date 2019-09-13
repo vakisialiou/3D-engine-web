@@ -12,33 +12,33 @@
 </template>
 
 <script>
-import Engine from './core/Engine'
-import Logo from './components/Logo.vue'
+  import Engine from './core/Engine'
+  import Logo from './components/Logo.vue'
 
-export default {
-  name: 'app',
-  components: {
-    Logo
-  },
-  mounted() {
-    const engine = new Engine()
+  export default {
+    name: 'app',
+    components: {
+      Logo
+    },
+    mounted() {
+      const engine = new Engine()
       engine.loadPerson().then(() => {
-          engine.initGraph(this.$el).animate()
+        engine.initGraph(this.$el).animate()
 
-          this.instructions = document.getElementById('instructions')
-          this.instructions.addEventListener('click', () => {
-              engine.personControls.lock()
-          }, false)
+        this.instructions = document.getElementById('instructions')
+        this.instructions.addEventListener('click', () => {
+          engine.personControls.lock()
+        }, false)
 
-          engine.personControls.addEventListener('lock', () => {
-              this.instructions.style.display = 'none'
-          })
-          engine.personControls.addEventListener('unlock', () => {
-              this.instructions.style.display = ''
-          })
+        engine.personControls.addEventListener('lock', () => {
+          this.instructions.style.display = 'none'
+        })
+        engine.personControls.addEventListener('unlock', () => {
+          this.instructions.style.display = ''
+        })
       })
+    }
   }
-}
 </script>
 
 <style>

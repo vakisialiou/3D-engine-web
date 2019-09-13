@@ -6,454 +6,454 @@ import Object3DStep from './../Helpers/Object3DStep'
 import {EventDispatcher, Vector3} from 'three'
 
 class PersonControls extends EventDispatcher {
+  /**
+   *
+   * @param {Object3D} person
+   * @param {Camera} camera
+   * @param {HTMLElement} [domElement]
+   */
+  constructor(person, camera, domElement) {
+    super()
+
+    this.walkSpeed = 400.0
+    this.runSpeed = 800.0
+    this.jumpHeight = 350
+
     /**
      *
-     * @param {Object3D} person
-     * @param {Camera} camera
-     * @param {HTMLElement} [domElement]
+     * @type {Object3D}
      */
-    constructor(person, camera, domElement) {
-        super()
+    this.person = person
 
-        this.walkSpeed = 400.0
-        this.runSpeed = 800.0
-        this.jumpHeight = 350
+    /**
+     *
+     * @type {Camera}
+     */
+    this.camera = camera
 
-        /**
-         *
-         * @type {Object3D}
-         */
-        this.person = person
+    /**
+     *
+     * @type {number}
+     */
+    this.targetDistance = 900
 
-        /**
-         *
-         * @type {Camera}
-         */
-        this.camera = camera
+    /**
+     *
+     * @type {number}
+     */
+    this.targetHeigth = 20
 
-        /**
-         *
-         * @type {number}
-         */
-        this.targetDistance = 900
+    /**
+     *
+     * @type {Vector3}
+     */
+    this.targetPosition = new Vector3()
 
-        /**
-         *
-         * @type {number}
-         */
-        this.targetHeigth = 20
+    /**
+     *
+     * @type {HTMLElement}
+     */
+    this.domElement = domElement || document.body
 
-        /**
-         *
-         * @type {Vector3}
-         */
-        this.targetPosition = new Vector3()
+    /**
+     *
+     * @type {boolean}
+     */
+    this.isLocked = false
 
-        /**
-         *
-         * @type {HTMLElement}
-         */
-        this.domElement = domElement || document.body
+    /**
+     *
+     * @type {Object3DStep}
+     */
+    this.cameraNextStep = new Object3DStep(camera)
 
-        /**
-         *
-         * @type {boolean}
-         */
-        this.isLocked = false
+    /**
+     *
+     * @type {Object3DStep}
+     */
+    this.personTarget = new Object3DStep(person)
 
-        /**
-         *
-         * @type {Object3DStep}
-         */
-        this.cameraNextStep = new Object3DStep(camera)
+    /**
+     *
+     * @type {Object3DFollower}
+     */
+    this.personFollower = new Object3DFollower(person, 4.5)
 
-        /**
-         *
-         * @type {Object3DStep}
-         */
-        this.personTarget = new Object3DStep(person)
+    /**
+     *
+     * @type {CameraFollower}
+     */
+    this.cameraFollower = new CameraFollower(camera)
 
-        /**
-         *
-         * @type {Object3DFollower}
-         */
-        this.personFollower = new Object3DFollower(person, 4.5)
+    /**
+     *
+     * @type {Object3DRoller}
+     */
+    this.cameraRoller = new Object3DRoller(person, camera, camera.position.z)
 
-        /**
-         *
-         * @type {CameraFollower}
-         */
-        this.cameraFollower = new CameraFollower(camera)
+    /**
+     *
+     * @type {Object3DPusher}
+     */
+    this.personPusher = new Object3DPusher(person)
 
-        /**
-         *
-         * @type {Object3DRoller}
-         */
-        this.cameraRoller = new Object3DRoller(person, camera, camera.position.z)
+    /**
+     *
+     * @type {Vector3}
+     */
+    this.velocity = new Vector3()
 
-        /**
-         *
-         * @type {Object3DPusher}
-         */
-        this.personPusher = new Object3DPusher(person)
+    /**
+     *
+     * @type {Vector3}
+     */
+    this.direction = new Vector3()
 
-        /**
-         *
-         * @type {Vector3}
-         */
-        this.velocity = new Vector3()
+    /**
+     *
+     * @type {boolean}
+     */
+    this.canMoveForward = false
 
-        /**
-         *
-         * @type {Vector3}
-         */
-        this.direction = new Vector3()
+    /**
+     *
+     * @type {boolean}
+     */
+    this.canMoveBackward = false
 
-        /**
-         *
-         * @type {boolean}
-         */
-        this.canMoveForward = false
+    /**
+     *
+     * @type {boolean}
+     */
+    this.canMoveLeft = false
 
-        /**
-         *
-         * @type {boolean}
-         */
-        this.canMoveBackward = false
+    /**
+     *
+     * @type {boolean}
+     */
+    this.canMoveRight = false
 
-        /**
-         *
-         * @type {boolean}
-         */
-        this.canMoveLeft = false
+    /**
+     *
+     * @type {boolean}
+     */
+    this.canJump = false
 
-        /**
-         *
-         * @type {boolean}
-         */
-        this.canMoveRight = false
+    /**
+     *
+     * @type {boolean}
+     */
+    this.canRun = false
 
-        /**
-         *
-         * @type {boolean}
-         */
+    /**
+     *
+     * @type {{canMoveLeft: number[], canMoveBackward: number[], canMoveRight: number[], canMoveForward: number[], canJump: number[]}}
+     */
+    this.keyboard = {
+      canMoveForward: [
+        38,/*up*/
+        87 /*w*/
+      ],
+      canMoveLeft: [
+        37,/*left*/
+        65 /*a*/
+      ],
+      canMoveBackward: [
+        40,/*down*/
+        83 /*s*/
+      ],
+      canMoveRight: [
+        39,/*right*/
+        68 /*d*/
+      ],
+      canJump: [
+        32 /*space*/
+      ],
+      canRun: [
+        16, /* shift */
+      ]
+    }
+
+    /**
+     *
+     * @type {{active: boolean, clickEvent: (Function|null), keyUpEvent: (Function|null), keyDownEvent: (Function|null), pointerLockErrorEvent: (Function|null), pointerLockChangeEvent: Function|null, mouseMoveEvent: Function|null}}
+     */
+    this.register = {
+      active: false,
+      clickEvent: null,
+      keyUpEvent: null,
+      keyDownEvent: null,
+      mouseMoveEvent: null,
+      pointerLockErrorEvent: null,
+      pointerLockChangeEvent: null,
+    }
+
+    /**
+     *
+     * @type {string|null|?}
+     */
+    this.actionName = null
+  }
+
+  /**
+   *
+   * @param {MouseEvent} event
+   * @returns {void}
+   */
+  onMouseMove(event) {
+    if (this.isLocked === false) {
+      return
+    }
+
+    this.cameraFollower.onMouseMove(event)
+    const target = this.cameraNextStep.get( - this.targetDistance)
+    this.personFollower.setTarget(target)
+    this.dispatchEvent({ type: 'change' })
+  }
+
+  /**
+   *
+   * @returns {void}
+   */
+  onPointerLockError() {
+    console.error( 'THREE.PersonControls: Unable to use Pointer Lock API' );
+  }
+
+  /**
+   *
+   * @returns {void}
+   */
+  onPointerLockChange() {
+    if (document.pointerLockElement === this.domElement) {
+      this.dispatchEvent({ type: 'lock' })
+      this.isLocked = true
+    } else {
+      this.dispatchEvent({ type: 'unlock' })
+      this.isLocked = false
+    }
+  }
+
+  /**
+   *
+   * @returns {void}
+   */
+  onKeyDown(event) {
+    const property = this.getKeyBoardProperty(event)
+    switch (property) {
+      case 'canMoveForward':
+      case 'canMoveBackward':
+      case 'canMoveLeft':
+      case 'canMoveRight':
+      case 'canRun':
+        this[property] = true
+        break
+      case 'canJump':
+        if (this.canJump === true) {
+          this.velocity.y += this.jumpHeight
+        }
         this.canJump = false
+        break
+    }
+  }
 
-        /**
-         *
-         * @type {boolean}
-         */
-        this.canRun = false
+  /**
+   *
+   * @returns {void}
+   */
+  onKeyUp(event) {
+    const property = this.getKeyBoardProperty(event)
+    switch (property) {
+      case 'canMoveForward':
+      case 'canMoveBackward':
+      case 'canMoveLeft':
+      case 'canMoveRight':
+      case 'canJump':
+      case 'canRun':
+        this[property] = false
+        break
+    }
+  }
 
-        /**
-         *
-         * @type {{canMoveLeft: number[], canMoveBackward: number[], canMoveRight: number[], canMoveForward: number[], canJump: number[]}}
-         */
-        this.keyboard = {
-            canMoveForward: [
-                38,/*up*/
-                87 /*w*/
-            ],
-            canMoveLeft: [
-                37,/*left*/
-                65 /*a*/
-            ],
-            canMoveBackward: [
-                40,/*down*/
-                83 /*s*/
-            ],
-            canMoveRight: [
-                39,/*right*/
-                68 /*d*/
-            ],
-            canJump: [
-                32 /*space*/
-            ],
-            canRun: [
-                16, /* shift */
-            ]
-        }
+  /**
+   *
+   * @param {MouseEvent} event
+   * @returns {void}
+   */
+  onClick(event) {
+    this.dispatchEvent({ type: 'action', actionName: PersonControls.ACTION_SHOT, event })
+  }
 
-        /**
-         *
-         * @type {{active: boolean, clickEvent: (Function|null), keyUpEvent: (Function|null), keyDownEvent: (Function|null), pointerLockErrorEvent: (Function|null), pointerLockChangeEvent: Function|null, mouseMoveEvent: Function|null}}
-         */
-        this.register = {
-            active: false,
-            clickEvent: null,
-            keyUpEvent: null,
-            keyDownEvent: null,
-            mouseMoveEvent: null,
-            pointerLockErrorEvent: null,
-            pointerLockChangeEvent: null,
-        }
+  /**
+   *
+   * @returns {string|null|?}
+   */
+  getKeyBoardProperty(event) {
+    for (const property in this.keyboard) {
+      if (!this.keyboard.hasOwnProperty(property)) {
+        continue
+      }
+      if (this.keyboard[property].indexOf(event.keyCode) === -1) {
+        continue
+      }
+      return property
+    }
+    return null
+  }
 
-        /**
-         *
-         * @type {string|null|?}
-         */
-        this.actionName = null
+  /**
+   *
+   * @returns {PersonControls}
+   */
+  lock() {
+    this.domElement.requestPointerLock()
+    return this
+  }
+
+  /**
+   *
+   * @returns {PersonControls}
+   */
+  unlock() {
+    document.exitPointerLock()
+    return this
+  }
+
+  /**
+   *
+   * @returns {PersonControls}
+   */
+  registerEventListeners() {
+    this.unregisterEventListeners()
+    this.register.active = true
+    this.register.clickEvent = (event) => this.onClick(event)
+    this.register.keyUpEvent = (event) => this.onKeyUp(event)
+    this.register.keyDownEvent = (event) => this.onKeyDown(event)
+    this.register.mouseMoveEvent = (event) => this.onMouseMove(event)
+    this.register.pointerLockErrorEvent = (event) => this.onPointerLockError(event)
+    this.register.pointerLockChangeEvent = (event) => this.onPointerLockChange(event)
+
+    document.addEventListener('keyup', this.register.keyUpEvent, false)
+    document.addEventListener('keydown', this.register.keyDownEvent, false)
+    document.addEventListener('mousemove', this.register.mouseMoveEvent, false)
+    document.addEventListener('pointerlockerror', this.register.pointerLockErrorEvent, false)
+    document.addEventListener('pointerlockchange', this.register.pointerLockChangeEvent, false)
+    this.domElement.addEventListener('click', this.register.clickEvent, false)
+    return this
+  }
+
+  /**
+   *
+   * @returns {PersonControls}
+   */
+  unregisterEventListeners() {
+    if (this.register.active) {
+      document.removeEventListener('keyup', this.register.keyUpEvent, false)
+      document.removeEventListener('keydown', this.register.keyDownEvent, false)
+      document.removeEventListener('mousemove', this.register.mouseMoveEvent, false)
+      document.removeEventListener('pointerlockerror', this.register.pointerLockErrorEvent, false)
+      document.removeEventListener('pointerlockchange', this.register.pointerLockChangeEvent, false)
+      this.domElement.removeEventListener('click', this.register.clickEvent, false)
+
+      this.register.active = false
+      this.register.clickEvent = null
+      this.register.keyUpEvent = null
+      this.register.keyDownEvent = null
+      this.register.mouseMoveEvent = null
+      this.register.pointerLockErrorEvent = null
+      this.register.pointerLockChangeEvent = null
+    }
+    return this
+  }
+
+  update(delta) {
+    const prevActionName = this.actionName
+    this.actionName = null
+
+    if (this.isLocked === true) {
+      this.velocity.x -= this.velocity.x * 10.0 * delta
+      this.velocity.z -= this.velocity.z * 10.0 * delta
+      this.velocity.y -= 9.8 * 100.0 * delta // 100.0 = mass
+
+      this.direction.z = Number(this.canMoveForward) - Number(this.canMoveBackward)
+      this.direction.x = Number(this.canMoveRight) - Number(this.canMoveLeft)
+
+      this.direction.normalize() // this ensures consistent movements in all directions
+
+      const speed = this.canRun ? this.runSpeed : this.walkSpeed
+      const actionName = this.canRun ? PersonControls.ACTION_RUN : PersonControls.ACTION_WALK
+
+      if (this.canMoveForward || this.canMoveBackward) {
+        this.velocity.z -= this.direction.z * speed * delta
+        this.actionName = actionName
+      }
+
+      if (this.canMoveLeft || this.canMoveRight) {
+        this.velocity.x -= this.direction.x * speed * delta
+        this.actionName = actionName
+      }
+
+      if (!this.canMoveForward && !this.canMoveBackward && !this.canMoveLeft && !this.canMoveRight) {
+        this.actionName = PersonControls.ACTION_STOP
+      }
+
+      if (this.canMoveLeft || this.canMoveRight) {
+        this.personPusher.moveRight(- this.velocity.x * delta)
+      }
+
+      if (this.canMoveForward || this.canMoveBackward) {
+        this.personPusher.moveForward(- this.velocity.z * delta)
+      }
+
+      const h = this.camera.position.y - this.person.position.y
+
+      this.person.position.y += this.velocity.y * delta
+      if (this.person.position.y < 0) {
+        this.velocity.y = 0
+        this.person.position.y = 0
+        this.canJump = true
+      } else {
+        this.actionName = PersonControls.ACTION_JUMP
+      }
+
+      this.camera.position.y = this.person.position.y + h
+
+      const target = this.personTarget.get(this.targetDistance)
+      this.targetPosition.copy(target).setY(this.targetHeigth)
+
+      this.cameraRoller.update(delta)
+
+      if ((this.canMoveForward || this.canMoveBackward || this.canMoveLeft || this.canMoveRight) && this.canJump) {
+        this.personFollower.update(delta)
+      }
+
+    } else {
+      this.actionName = PersonControls.ACTION_STOP
     }
 
-    /**
-     *
-     * @param {MouseEvent} event
-     * @returns {void}
-     */
-    onMouseMove(event) {
-        if (this.isLocked === false) {
-            return
-        }
-
-        this.cameraFollower.onMouseMove(event)
-        const target = this.cameraNextStep.get( - this.targetDistance)
-        this.personFollower.setTarget(target)
-        this.dispatchEvent({ type: 'change' })
+    if (prevActionName && prevActionName !== this.actionName) {
+      this.dispatchEvent({ type: 'action', actionName: this.actionName })
     }
+  }
 
-    /**
-     *
-     * @returns {void}
-     */
-    onPointerLockError() {
-        console.error( 'THREE.PersonControls: Unable to use Pointer Lock API' );
-    }
+  static get ACTION_STOP() {
+    return 'stop'
+  }
 
-    /**
-     *
-     * @returns {void}
-     */
-    onPointerLockChange() {
-        if (document.pointerLockElement === this.domElement) {
-            this.dispatchEvent({ type: 'lock' })
-            this.isLocked = true
-        } else {
-            this.dispatchEvent({ type: 'unlock' })
-            this.isLocked = false
-        }
-    }
+  static get ACTION_WALK() {
+    return 'walk'
+  }
 
-    /**
-     *
-     * @returns {void}
-     */
-    onKeyDown(event) {
-        const property = this.getKeyBoardProperty(event)
-        switch (property) {
-            case 'canMoveForward':
-            case 'canMoveBackward':
-            case 'canMoveLeft':
-            case 'canMoveRight':
-            case 'canRun':
-                this[property] = true
-                break
-            case 'canJump':
-                if (this.canJump === true) {
-                    this.velocity.y += this.jumpHeight
-                }
-                this.canJump = false
-                break
-        }
-    }
+  static get ACTION_RUN() {
+    return 'run'
+  }
 
-    /**
-     *
-     * @returns {void}
-     */
-    onKeyUp(event) {
-        const property = this.getKeyBoardProperty(event)
-        switch (property) {
-            case 'canMoveForward':
-            case 'canMoveBackward':
-            case 'canMoveLeft':
-            case 'canMoveRight':
-            case 'canJump':
-            case 'canRun':
-                this[property] = false
-                break
-        }
-    }
+  static get ACTION_JUMP() {
+    return 'jump'
+  }
 
-    /**
-     *
-     * @param {MouseEvent} event
-     * @returns {void}
-     */
-    onClick(event) {
-        this.dispatchEvent({ type: 'action', actionName: PersonControls.ACTION_SHOT, event })
-    }
-
-    /**
-     *
-     * @returns {string|null|?}
-     */
-    getKeyBoardProperty(event) {
-        for (const property in this.keyboard) {
-            if (!this.keyboard.hasOwnProperty(property)) {
-                continue
-            }
-            if (this.keyboard[property].indexOf(event.keyCode) === -1) {
-                continue
-            }
-            return property
-        }
-        return null
-    }
-
-    /**
-     *
-     * @returns {PersonControls}
-     */
-    lock() {
-        this.domElement.requestPointerLock()
-        return this
-    }
-
-    /**
-     *
-     * @returns {PersonControls}
-     */
-    unlock() {
-        document.exitPointerLock()
-        return this
-    }
-
-    /**
-     *
-     * @returns {PersonControls}
-     */
-    registerEventListeners() {
-        this.unregisterEventListeners()
-        this.register.active = true
-        this.register.clickEvent = (event) => this.onClick(event)
-        this.register.keyUpEvent = (event) => this.onKeyUp(event)
-        this.register.keyDownEvent = (event) => this.onKeyDown(event)
-        this.register.mouseMoveEvent = (event) => this.onMouseMove(event)
-        this.register.pointerLockErrorEvent = (event) => this.onPointerLockError(event)
-        this.register.pointerLockChangeEvent = (event) => this.onPointerLockChange(event)
-
-        document.addEventListener('keyup', this.register.keyUpEvent, false)
-        document.addEventListener('keydown', this.register.keyDownEvent, false)
-        document.addEventListener('mousemove', this.register.mouseMoveEvent, false)
-        document.addEventListener('pointerlockerror', this.register.pointerLockErrorEvent, false)
-        document.addEventListener('pointerlockchange', this.register.pointerLockChangeEvent, false)
-        this.domElement.addEventListener('click', this.register.clickEvent, false)
-        return this
-    }
-
-    /**
-     *
-     * @returns {PersonControls}
-     */
-    unregisterEventListeners() {
-        if (this.register.active) {
-            document.removeEventListener('keyup', this.register.keyUpEvent, false)
-            document.removeEventListener('keydown', this.register.keyDownEvent, false)
-            document.removeEventListener('mousemove', this.register.mouseMoveEvent, false)
-            document.removeEventListener('pointerlockerror', this.register.pointerLockErrorEvent, false)
-            document.removeEventListener('pointerlockchange', this.register.pointerLockChangeEvent, false)
-            this.domElement.removeEventListener('click', this.register.clickEvent, false)
-
-            this.register.active = false
-            this.register.clickEvent = null
-            this.register.keyUpEvent = null
-            this.register.keyDownEvent = null
-            this.register.mouseMoveEvent = null
-            this.register.pointerLockErrorEvent = null
-            this.register.pointerLockChangeEvent = null
-        }
-        return this
-    }
-
-    update(delta) {
-        const prevActionName = this.actionName
-        this.actionName = null
-
-        if (this.isLocked === true) {
-            this.velocity.x -= this.velocity.x * 10.0 * delta
-            this.velocity.z -= this.velocity.z * 10.0 * delta
-            this.velocity.y -= 9.8 * 100.0 * delta // 100.0 = mass
-
-            this.direction.z = Number(this.canMoveForward) - Number(this.canMoveBackward)
-            this.direction.x = Number(this.canMoveRight) - Number(this.canMoveLeft)
-
-            this.direction.normalize() // this ensures consistent movements in all directions
-
-            const speed = this.canRun ? this.runSpeed : this.walkSpeed
-            const actionName = this.canRun ? PersonControls.ACTION_RUN : PersonControls.ACTION_WALK
-
-            if (this.canMoveForward || this.canMoveBackward) {
-                this.velocity.z -= this.direction.z * speed * delta
-                this.actionName = actionName
-            }
-
-            if (this.canMoveLeft || this.canMoveRight) {
-                this.velocity.x -= this.direction.x * speed * delta
-                this.actionName = actionName
-            }
-
-            if (!this.canMoveForward && !this.canMoveBackward && !this.canMoveLeft && !this.canMoveRight) {
-                this.actionName = PersonControls.ACTION_STOP
-            }
-
-            if (this.canMoveLeft || this.canMoveRight) {
-                this.personPusher.moveRight(- this.velocity.x * delta)
-            }
-
-            if (this.canMoveForward || this.canMoveBackward) {
-                this.personPusher.moveForward(- this.velocity.z * delta)
-            }
-
-            const h = this.camera.position.y - this.person.position.y
-
-            this.person.position.y += this.velocity.y * delta
-            if (this.person.position.y < 0) {
-                this.velocity.y = 0
-                this.person.position.y = 0
-                this.canJump = true
-            } else {
-                this.actionName = PersonControls.ACTION_JUMP
-            }
-
-            this.camera.position.y = this.person.position.y + h
-
-            const target = this.personTarget.get(this.targetDistance)
-            this.targetPosition.copy(target).setY(this.targetHeigth)
-
-            this.cameraRoller.update(delta)
-
-            if ((this.canMoveForward || this.canMoveBackward || this.canMoveLeft || this.canMoveRight) && this.canJump) {
-                this.personFollower.update(delta)
-            }
-
-        } else {
-            this.actionName = PersonControls.ACTION_STOP
-        }
-
-        if (prevActionName && prevActionName !== this.actionName) {
-            this.dispatchEvent({ type: 'action', actionName: this.actionName })
-        }
-    }
-
-    static get ACTION_STOP() {
-        return 'stop'
-    }
-
-    static get ACTION_WALK() {
-        return 'walk'
-    }
-
-    static get ACTION_RUN() {
-        return 'run'
-    }
-
-    static get ACTION_JUMP() {
-        return 'jump'
-    }
-
-    static get ACTION_SHOT() {
-        return 'shot'
-    }
+  static get ACTION_SHOT() {
+    return 'shot'
+  }
 }
 
 export default PersonControls
