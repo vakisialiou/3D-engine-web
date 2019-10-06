@@ -105,10 +105,6 @@ class Glow {
   }
 
   /**
-   * color, coefficient, power, length
-   */
-
-  /**
    *
    * @param {Mesh} mesh
    * @param {GlowParams} options
@@ -123,7 +119,9 @@ class Glow {
     const geometry = mesh.geometry.clone()
     Glow._dilateGeometry(geometry, options.length)
 
-    return new Mesh(geometry, material)
+    const flowMesh = new Mesh(geometry, material)
+    flowMesh.name = 'glow-inside'
+    return flowMesh
   }
 
   /**
@@ -142,7 +140,9 @@ class Glow {
     const geometry	= mesh.geometry.clone()
     Glow._dilateGeometry(geometry, options.length)
 
-    return new Mesh(geometry, material)
+    const flowMesh = new Mesh(geometry, material)
+    flowMesh.name = 'glow-outside'
+    return flowMesh
   }
 }
 

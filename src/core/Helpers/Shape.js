@@ -16,6 +16,16 @@ class Shape extends Mesh {
 
   /**
    *
+   * @param {string} name
+   * @returns {Shape}
+   */
+  setName(name) {
+    this.name = name
+    return this
+  }
+
+  /**
+   *
    * @param {string} path
    * @param {Number} [repeatX]
    * @param {Number} [repeatY]

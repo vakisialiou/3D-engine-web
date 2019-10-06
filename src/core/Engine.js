@@ -7,7 +7,8 @@ import {
   DirectionalLight,
   PerspectiveCamera,
   HemisphereLightHelper,
-  DirectionalLightHelper
+  DirectionalLightHelper,
+  Group
 } from 'three'
 import SkyDome from './SkyDome'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
@@ -58,7 +59,7 @@ class Engine {
     this.hemiLight = new HemisphereLight(0xffffff, 0xffffff, 0.6)
     this.hemiLight.color.setHSL(0.6, 1, 0.6)
     this.hemiLight.groundColor.setHSL( 0.095, 1, 0.75)
-    this.hemiLight.position.set(0, 50, 0)
+    this.hemiLight.position.set(450, 450, 0)
     this.scene.add(this.hemiLight)
 
     this.hemiLightHelper = new HemisphereLightHelper(this.hemiLight, 10)
@@ -66,45 +67,23 @@ class Engine {
 
     this.dirLight = new DirectionalLight(0xffffff, 1)
     this.dirLight.color.setHSL(0.1, 1, 0.95)
-    this.dirLight.position.set(- 1, 1.75, 1)
+    this.dirLight.position.set(- 500, 500, 1)
     this.dirLight.position.multiplyScalar(30)
-    this.scene.add(this.dirLight)
-    this.dirLight.castShadow = true
-    this.dirLight.shadow.mapSize.width = 2048
-    this.dirLight.shadow.mapSize.height = 2048
+    // this.scene.add(this.dirLight)
+    // this.dirLight.castShadow = true
+    // this.dirLight.shadow.mapSize.width = 2048
+    // this.dirLight.shadow.mapSize.height = 2048
 
-    const d = 50;
-    this.dirLight.shadow.camera.left = - d
-    this.dirLight.shadow.camera.right = d
-    this.dirLight.shadow.camera.top = d
-    this.dirLight.shadow.camera.bottom = - d
-    this.dirLight.shadow.camera.far = 3500
-    this.dirLight.shadow.bias = - 0.0001
+    // const d = 50;
+    // this.dirLight.shadow.camera.left = - d
+    // this.dirLight.shadow.camera.right = d
+    // this.dirLight.shadow.camera.top = d
+    // this.dirLight.shadow.camera.bottom = - d
+    // this.dirLight.shadow.camera.far = 3500
+    // this.dirLight.shadow.bias = - 0.0001
 
     this.dirLightHeper = new DirectionalLightHelper(this.dirLight, 10)
     this.scene.add(this.dirLightHeper)
-
-    // CUBES
-    const counts = 5
-    for (let i = - counts; i < counts; i++) {
-      for (let a = - counts; a < counts; a++) {
-        const shape = new Shape()
-          .setTextureMaterial('textures/1.png')
-          .setPositionY(50 / 2)
-          .setPositionX((i * 250) - 100)
-          .setPositionZ(a * 250)
-          .cube(50)
-        this.scene.add(shape)
-
-        const glowI = Glow.getGlowInsideMesh(shape, new GlowParams())
-        this.scene.add(glowI)
-
-        const glowO = Glow.getGlowOutsideMesh(shape, new GlowParams())
-        this.scene.add(glowO)
-
-      }
-    }
-
 
     // GROUND
     const ground = new Shape().setTextureMaterial('textures/2.png', 50, 50, true).ground(5000, 5000)
@@ -126,6 +105,21 @@ class Engine {
   }
 
   loadPerson() {
+
+    const loader1 = new GLTFLoader()
+    loader1.load('models/Bow_tower.glb', (gltf) => {
+      const mesh = gltf.scene.children[0]
+      mesh.scale.set(10, 10, 10)
+
+      for (let i = - 10; i < 10; i ++) {
+        const m = mesh.clone()
+        const x = Math.floor(Math.random() * Math.floor(600)) * i
+        const z = Math.floor(Math.random() * Math.floor(600)) * i
+        m.position.set(x, 0, z)
+        this.scene.add(m)
+      }
+    })
+
     return new Promise((resolve) => {
       // PERSON
       const loader = new GLTFLoader()
