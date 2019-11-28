@@ -23,9 +23,9 @@ export default {
   },
   mounted() {
 
-    Engine.loadGLTFModel().then((gltf) => {
+    Engine.loadSoldierModel().then((gltf) => {
       const engine = new Engine(gltf)
-      engine.tttt().registerEvents()
+      engine.registerEvents()
       engine.initGraph(this.$el).animate()
 
 
