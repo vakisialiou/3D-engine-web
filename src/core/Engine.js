@@ -6,8 +6,9 @@ import {
     HemisphereLight,
     DirectionalLight,
     PerspectiveCamera,
-    HemisphereLightHelper,
-    DirectionalLightHelper
+    DirectionalLightHelper,
+    PointLight,
+    PointLightHelper
 } from 'three'
 import SkyDome from './SkyDome'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
@@ -20,11 +21,17 @@ import EngineRenderer from './EngineRenderer'
 import Storage from './../lib/Storage'
 import Shape from './Helpers/Shape'
 import Target from './Shapes/Target'
+import Object3DStep from './Helpers/Object3DStep'
+import CameraFollower from './Helpers/CameraFollower'
+import Object3DRoller from './Helpers/Object3DRoller'
 
 const gui = new GUI();
 
+/**
+ * @param {Object} gltf
+ */
 class Engine {
-    constructor() {
+    constructor(gltf) {
         this.updates = []
 
         this.enabled = Storage.getStorageItem('engine-status') === 'enabled'
@@ -55,32 +62,23 @@ class Engine {
 
         this.hemiLight = new HemisphereLight(0xffffff, 0xffffff, 0.6)
         this.hemiLight.color.setHSL(0.6, 1, 0.6)
-        this.hemiLight.groundColor.setHSL( 0.095, 1, 0.75)
+        this.hemiLight.groundColor.setHSL(0.095, 1, 0.75)
         this.hemiLight.position.set(0, 50, 0)
         this.scene.add(this.hemiLight)
 
-        this.hemiLightHelper = new HemisphereLightHelper(this.hemiLight, 10)
-        this.scene.add(this.hemiLightHelper)
-
-        this.dirLight = new DirectionalLight(0xffffff, 1)
-        this.dirLight.color.setHSL(0.1, 1, 0.95)
-        this.dirLight.position.set(- 1, 1.75, 1)
-        this.dirLight.position.multiplyScalar(30)
+        this.dirLight = new DirectionalLight(0xFFFFFF, 2)
+        this.dirLight.position.set(150, 150, 150)
         this.scene.add(this.dirLight)
-        this.dirLight.castShadow = true
-        this.dirLight.shadow.mapSize.width = 2048
-        this.dirLight.shadow.mapSize.height = 2048
 
-        const d = 50;
-        this.dirLight.shadow.camera.left = - d
-        this.dirLight.shadow.camera.right = d
-        this.dirLight.shadow.camera.top = d
-        this.dirLight.shadow.camera.bottom = - d
-        this.dirLight.shadow.camera.far = 3500
-        this.dirLight.shadow.bias = - 0.0001
+        this.dirLightHelper = new DirectionalLightHelper(this.dirLight)
+        this.scene.add(this.dirLightHelper)
 
-        this.dirLightHeper = new DirectionalLightHelper(this.dirLight, 10)
-        this.scene.add(this.dirLightHeper)
+        this.pointLight = new PointLight(0xFFFFFF, 1, 100)
+        this.pointLight.position.set(30, 10, 40)
+        this.scene.add(this.pointLight)
+
+        this.pointLightHelper = new PointLightHelper(this.pointLight)
+        this.scene.add(this.pointLightHelper)
 
         // CUBES
         const counts = 5
@@ -99,91 +97,166 @@ class Engine {
 
         // GROUND
         const ground = new Shape().setTextureMaterial('textures/2.png', 50, 50, true).ground(5000, 5000)
+        ground.name = 'Ground'
         this.scene.add(ground)
 
         // SKYDOME
         this.sky = new SkyDome()
         this.scene.add(this.sky)
 
-        this.target = null
-        this.personShot = null
-        this.personControls = null
-        this.personAnimation = null
+        this.target = new Target().load('textures/target.png')
+        this.target.setSize(55)
+        this.scene.add(this.target)
+
+        this.personShot = new PersonShot(this.scene)
+
+        const personAnimation = new PersonAnimation(gltf).activateAllActions()
+        this.personControls = new PersonControls(personAnimation).registerEventListeners(this.renderer.domElement)
+        this.scene.add(this.personControls.person)
 
         const folder = gui.addFolder('Small camera')
         folder.add(this.cameraMap.position, 'x', -500, 500)
         folder.add(this.cameraMap.position, 'y', 100, 1000)
         folder.add(this.cameraMap.position, 'z', -500, 500)
+
+        this.players = {}
+
+        /**
+         *
+         * @type {Object3DStep}
+         */
+        this.targetPosition = new Object3DStep(this.camera, 1900)
+
+        /**
+         *
+         * @type {CameraFollower}
+         */
+        this.cameraFollower = new CameraFollower(this.camera)
+
+        /**
+         *
+         * @type {Object3DRoller}
+         */
+        this.cameraRoller = new Object3DRoller(this.personControls.person, this.camera, this.camera.position.z)
+
+        this.register = {
+            mouseMoveEvent: null
+        }
     }
 
-    loadPerson() {
+    onMouseMove(event) {
+        if (!this.personControls.isLocked) {
+            return
+        }
+        this.cameraFollower.onMouseMove(event)
+        this.personControls.personFollower.setTarget(this.targetPosition.clone().setY(0))
+    }
+
+    registerEvents() {
+        this.register.mouseMoveEvent = (event) => this.onMouseMove(event)
+        document.addEventListener('mousemove', this.register.mouseMoveEvent, false)
+    }
+
+    unregisterEvents() {
+        document.removeEventListener('mousemove', this.register.mouseMoveEvent, false)
+        this.register.mouseMoveEvent = null
+    }
+
+    loadOtherPlayer() {
         return new Promise((resolve) => {
             // PERSON
             const loader = new GLTFLoader()
+
             loader.load('models/Soldier.glb', (gltf) => {
-                this.target = new Target().load('textures/target.png')
-                this.target.setSize(35)
-                this.scene.add(this.target)
-
-                this.personAnimation = new PersonAnimation(gltf).activateAllActions()
-                this.personControls = new PersonControls(this.personAnimation, this.camera, this.renderer.domElement).registerEventListeners()
-
-                this.personControls.addEventListener('lock', () => {
-                    this.target.show()
-                })
-
-                this.personControls.addEventListener('unlock', () => {
-                    this.target.hide()
-                })
-
-                this.scene.add(this.personAnimation)
-
-                this.personShot = new PersonShot(this.personAnimation, this.scene)
-                this.personShot.onHit((data) => {
-                    const model = data.intersections[0]['object']
-                    this.scene.remove(model)
-                })
-
-                this.personControls.addEventListener('action', (event) => {
-                    switch (event.actionName) {
-                        case PersonControls.ACTION_STOP:
-                            this.personAnimation.stop()
-                            break
-                        case PersonControls.ACTION_WALK:
-                            this.personAnimation.walk()
-                            break
-                        case PersonControls.ACTION_RUN:
-                            this.personAnimation.run()
-                            break
-                        case PersonControls.ACTION_JUMP:
-                            this.personAnimation.jump()
-                            break
-                        case PersonControls.ACTION_SHOT:
-                            const intersectionObjects = this.scene.children.filter((object) => {
-                                return object instanceof Shape
-                            })
-                            this.personShot.fire(intersectionObjects)
-                            break
-                    }
-                })
-
-                this.updates.push({
-                    update: (delta) => {
-                        this.personControls.update(delta)
-                        this.target.position.copy(this.personControls.targetPosition)
-                        this.cameraMap.position.x = this.personAnimation.position.x
-                        this.cameraMap.position.y = this.personAnimation.position.y + 70
-                        this.cameraMap.position.z = this.personAnimation.position.z + 100
-                        this.cameraMap.lookAt(this.personAnimation.position)
-                        this.sky.position.copy(this.personAnimation.position)
-                        this.personAnimation.update(delta)
-                        this.personShot.update(delta)
-                    }
-                })
-
-                resolve()
+                const personAnimation = new PersonAnimation(gltf).activateAllActions()
+                const player = new PersonControls(personAnimation)
+                resolve(player)
             })
         })
+    }
+
+    addPlayerToScene(personControls) {
+        this.scene.add(personControls.person)
+        this.updates.push({
+            update: (delta) => {
+                personControls.update(delta)
+                personControls.person.update(delta)
+                this.personShot.update(delta)
+            }
+        })
+    }
+
+    static loadGLTFModel() {
+        return new Promise((resolve) => {
+            const loader = new GLTFLoader()
+            loader.load('models/Soldier.glb', resolve)
+        })
+    }
+
+    tttt() {
+        this.personControls.addEventListener('lock', () => {
+            this.target.show()
+        })
+
+        this.personControls.addEventListener('unlock', () => {
+            this.target.hide()
+        })
+
+        this.personControls.addEventListener('show-target', () => {
+            this.target.show()
+        })
+
+        this.personControls.addEventListener('hide-target', () => {
+            this.target.hide()
+        })
+
+        this.personShot.onHit((data) => {
+            const model = data.intersections[0]['object']
+            this.scene.remove(model)
+        })
+
+        this.personControls.addEventListener('action', (event) => {
+            switch (event.actionName) {
+                case PersonControls.ACTION_STOP:
+                    this.personControls.person.stop()
+                    break
+                case PersonControls.ACTION_WALK:
+                    this.personControls.person.walk()
+                    break
+                case PersonControls.ACTION_RUN:
+                    this.personControls.person.run()
+                    break
+                case PersonControls.ACTION_JUMP:
+                    this.personControls.person.jump()
+                    break
+                case PersonControls.ACTION_SHOT:
+                    const intersectionObjects = this.scene.children.filter((object) => {
+                        if (['Ground'].includes(object.name)) {
+                            return false
+                        }
+                        return object instanceof Shape
+                    })
+
+                    this.personShot.fire(this.personControls.gunPosition.clone(), this.personControls.gunDirection.clone(), intersectionObjects)
+                    break
+            }
+        })
+
+        this.updates.push({
+            update: (delta) => {
+                this.personControls.update(delta)
+                this.target.position.copy(this.targetPosition)
+                this.cameraMap.position.x = this.personControls.person.position.x
+                this.cameraMap.position.y = this.personControls.person.position.y + 70
+                this.cameraMap.position.z = this.personControls.person.position.z + 100
+                this.cameraMap.lookAt(this.personControls.person.position)
+                this.sky.position.copy(this.personControls.person.position)
+                this.personControls.person.update(delta)
+                this.personShot.update(delta)
+            }
+        })
+
+        return this
     }
 
     /**
@@ -211,6 +284,9 @@ class Engine {
         }
 
         const delta = this.clock.getDelta()
+
+        this.targetPosition.update(delta)
+        this.cameraRoller.update(delta)
 
         for (const item of this.updates) {
             item.update(delta)

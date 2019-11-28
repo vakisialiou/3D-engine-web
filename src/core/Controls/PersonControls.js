@@ -1,18 +1,13 @@
 import Object3DFollower from './../Helpers/Object3DFollower'
 import Object3DPusher from './../Helpers/Object3DPusher'
-import Object3DRoller from './../Helpers/Object3DRoller'
-import CameraFollower from './../Helpers/CameraFollower'
-import Object3DStep from './../Helpers/Object3DStep'
-import {EventDispatcher, Vector3} from 'three'
+import { EventDispatcher, Vector3, Raycaster } from 'three'
 
 class PersonControls extends EventDispatcher {
     /**
      *
-     * @param {Object3D} person
-     * @param {Camera} camera
-     * @param {HTMLElement} [domElement]
+     * @param {PersonAnimation|Object3D} person
      */
-    constructor(person, camera, domElement) {
+    constructor(person) {
         super()
 
         this.walkSpeed = 400.0
@@ -21,39 +16,21 @@ class PersonControls extends EventDispatcher {
 
         /**
          *
-         * @type {Object3D}
+         * @type {PersonAnimation|Object3D}
          */
         this.person = person
 
         /**
          *
-         * @type {Camera}
+         * @type {Vector3}
          */
-        this.camera = camera
-
-        /**
-         *
-         * @type {number}
-         */
-        this.targetDistance = 900
-
-        /**
-         *
-         * @type {number}
-         */
-        this.targetHeigth = 20
+        this.gunDirection = new Vector3()
 
         /**
          *
          * @type {Vector3}
          */
-        this.targetPosition = new Vector3()
-
-        /**
-         *
-         * @type {HTMLElement}
-         */
-        this.domElement = domElement || document.body
+        this.gunPosition = new Vector3()
 
         /**
          *
@@ -63,33 +40,9 @@ class PersonControls extends EventDispatcher {
 
         /**
          *
-         * @type {Object3DStep}
-         */
-        this.cameraNextStep = new Object3DStep(camera)
-
-        /**
-         *
-         * @type {Object3DStep}
-         */
-        this.personTarget = new Object3DStep(person)
-
-        /**
-         *
          * @type {Object3DFollower}
          */
         this.personFollower = new Object3DFollower(person, 4.5)
-
-        /**
-         *
-         * @type {CameraFollower}
-         */
-        this.cameraFollower = new CameraFollower(camera)
-
-        /**
-         *
-         * @type {Object3DRoller}
-         */
-        this.cameraRoller = new Object3DRoller(person, camera, camera.position.z)
 
         /**
          *
@@ -176,14 +129,13 @@ class PersonControls extends EventDispatcher {
 
         /**
          *
-         * @type {{active: boolean, clickEvent: (Function|null), keyUpEvent: (Function|null), keyDownEvent: (Function|null), pointerLockErrorEvent: (Function|null), pointerLockChangeEvent: Function|null, mouseMoveEvent: Function|null}}
+         * @type {{active: boolean, clickEvent: (Function|null), keyUpEvent: (Function|null), keyDownEvent: (Function|null), pointerLockErrorEvent: (Function|null), pointerLockChangeEvent: Function|null}}
          */
         this.register = {
             active: false,
             clickEvent: null,
             keyUpEvent: null,
             keyDownEvent: null,
-            mouseMoveEvent: null,
             pointerLockErrorEvent: null,
             pointerLockChangeEvent: null,
         }
@@ -193,6 +145,12 @@ class PersonControls extends EventDispatcher {
          * @type {string|null|?}
          */
         this.actionName = null
+
+        /**
+         *
+         * @type {Raycaster}
+         */
+        this.raycaster = new Raycaster()
     }
 
     /**
@@ -201,14 +159,39 @@ class PersonControls extends EventDispatcher {
      * @returns {void}
      */
     onMouseMove(event) {
-        if (this.isLocked === false) {
-            return
-        }
+        // if (this.isLocked === false) {
+        //     return
+        // }
+        //
+        // if (!this.camera) {
+        //     return
+        // }
 
-        this.cameraFollower.onMouseMove(event)
-        const target = this.cameraNextStep.get( - this.targetDistance)
-        this.personFollower.setTarget(target)
-        this.dispatchEvent({ type: 'change' })
+
+
+        // const cameraTarget = this.cameraNextStep.get(this.targetDistance)
+        // this.personFollower.setTarget(cameraTarget.clone().setY(0))
+        //
+        // this.targetPosition.copy(cameraTarget)
+
+
+
+        //
+        // // Направление пушки персонажа
+        // this.gunDirection.copy(cameraTarget).sub(this.gunPosition).normalize()
+        // this.dispatchEvent({ type: 'mouse-move' })
+        //
+        // // Проверить пересечение прицела с персонажем. Если прицел находится на персонаже то нужно скрыть прицел.
+        // this.raycaster.ray.origin.copy(this.camera.position)
+        // this.raycaster.ray.direction.copy(this.cameraNextStep.direction.get())
+        // this.raycaster.near = 0
+        // this.raycaster.far = this.camera.position.distanceTo(this.targetPosition)
+        // const intersectObjects = this.raycaster.intersectObjects([this.person], true)
+        // if (intersectObjects.length > 0) {
+        //     this.dispatchEvent({ type: 'hide-target' })
+        // } else {
+        //     this.dispatchEvent({ type: 'show-target' })
+        // }
     }
 
     /**
@@ -221,10 +204,11 @@ class PersonControls extends EventDispatcher {
 
     /**
      *
+     * @param {Element} domElement
      * @returns {void}
      */
-    onPointerLockChange() {
-        if (document.pointerLockElement === this.domElement) {
+    onPointerLockChange(domElement) {
+        if (document.pointerLockElement === domElement) {
             this.dispatchEvent({ type: 'lock' })
             this.isLocked = true
         } else {
@@ -302,10 +286,11 @@ class PersonControls extends EventDispatcher {
 
     /**
      *
+     * @param {Element} [domElement]
      * @returns {PersonControls}
      */
-    lock() {
-        this.domElement.requestPointerLock()
+    lock(domElement = document.body) {
+        domElement.requestPointerLock()
         return this
     }
 
@@ -320,50 +305,84 @@ class PersonControls extends EventDispatcher {
 
     /**
      *
+     * @param {Element} [domElement]
      * @returns {PersonControls}
      */
-    registerEventListeners() {
-        this.unregisterEventListeners()
+    registerEventListeners(domElement = document.body) {
+        this.unregisterEventListeners(domElement)
         this.register.active = true
         this.register.clickEvent = (event) => this.onClick(event)
         this.register.keyUpEvent = (event) => this.onKeyUp(event)
         this.register.keyDownEvent = (event) => this.onKeyDown(event)
-        this.register.mouseMoveEvent = (event) => this.onMouseMove(event)
-        this.register.pointerLockErrorEvent = (event) => this.onPointerLockError(event)
-        this.register.pointerLockChangeEvent = (event) => this.onPointerLockChange(event)
+        this.register.pointerLockErrorEvent = () => this.onPointerLockError()
+        this.register.pointerLockChangeEvent = () => this.onPointerLockChange(domElement)
 
         document.addEventListener('keyup', this.register.keyUpEvent, false)
         document.addEventListener('keydown', this.register.keyDownEvent, false)
-        document.addEventListener('mousemove', this.register.mouseMoveEvent, false)
         document.addEventListener('pointerlockerror', this.register.pointerLockErrorEvent, false)
         document.addEventListener('pointerlockchange', this.register.pointerLockChangeEvent, false)
-        this.domElement.addEventListener('click', this.register.clickEvent, false)
+        domElement.addEventListener('click', this.register.clickEvent, false)
         return this
     }
 
     /**
      *
+     * @param {Element} domElement
      * @returns {PersonControls}
      */
-    unregisterEventListeners() {
+    unregisterEventListeners(domElement) {
         if (this.register.active) {
             document.removeEventListener('keyup', this.register.keyUpEvent, false)
             document.removeEventListener('keydown', this.register.keyDownEvent, false)
-            document.removeEventListener('mousemove', this.register.mouseMoveEvent, false)
             document.removeEventListener('pointerlockerror', this.register.pointerLockErrorEvent, false)
             document.removeEventListener('pointerlockchange', this.register.pointerLockChangeEvent, false)
-            this.domElement.removeEventListener('click', this.register.clickEvent, false)
+            domElement.removeEventListener('click', this.register.clickEvent, false)
 
             this.register.active = false
             this.register.clickEvent = null
             this.register.keyUpEvent = null
             this.register.keyDownEvent = null
-            this.register.mouseMoveEvent = null
             this.register.pointerLockErrorEvent = null
             this.register.pointerLockChangeEvent = null
         }
         return this
     }
+
+    getActionData() {
+        return {
+            actionName: this.actionName,
+            isLocked: this.isLocked,
+            velocity: this.velocity,
+            direction: this.direction,
+            canMoveForward: this.canMoveForward,
+            canMoveBackward: this.canMoveBackward,
+            canMoveRight: this.canMoveRight,
+            canMoveLeft: this.canMoveLeft,
+            canRun: this.canRun,
+            runSpeed: this.runSpeed,
+            walkSpeed: this.walkSpeed
+        }
+    }
+
+    /**
+     *
+     * @param {Object} data
+     * @returns {PersonControls}
+     */
+    setActionData(data) {
+        for (const property in this.getActionData()) {
+            if (!data.hasOwnProperty(property)) {
+                continue
+            }
+            if (['velocity', 'direction'].includes(property)) {
+                this[property].copy(data[property])
+                continue
+            }
+            this[property] = data[property]
+        }
+        return this
+    }
+
 
     update(delta) {
         const prevActionName = this.actionName
@@ -404,8 +423,6 @@ class PersonControls extends EventDispatcher {
                 this.personPusher.moveForward(- this.velocity.z * delta)
             }
 
-            const h = this.camera.position.y - this.person.position.y
-
             this.person.position.y += this.velocity.y * delta
             if (this.person.position.y < 0) {
                 this.velocity.y = 0
@@ -415,13 +432,6 @@ class PersonControls extends EventDispatcher {
                 this.actionName = PersonControls.ACTION_JUMP
             }
 
-            this.camera.position.y = this.person.position.y + h
-
-            const target = this.personTarget.get(this.targetDistance)
-            this.targetPosition.copy(target).setY(this.targetHeigth)
-
-            this.cameraRoller.update(delta)
-
             if ((this.canMoveForward || this.canMoveBackward || this.canMoveLeft || this.canMoveRight) && this.canJump) {
                 this.personFollower.update(delta)
             }
@@ -429,6 +439,10 @@ class PersonControls extends EventDispatcher {
         } else {
             this.actionName = PersonControls.ACTION_STOP
         }
+
+        // Позиция пушки персонажа
+        const y = this.person.position.y
+        this.gunPosition.copy(this.person.position).setY(y + 26)
 
         if (prevActionName && prevActionName !== this.actionName) {
             this.dispatchEvent({ type: 'action', actionName: this.actionName })

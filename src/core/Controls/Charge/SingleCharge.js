@@ -1,19 +1,25 @@
-import Object3DDirection from '../../Helpers/Object3DDirection'
 import { Mesh, MeshBasicMaterial, Vector3, SphereBufferGeometry, EventDispatcher, Raycaster } from 'three'
 
 class SingleCharge extends Mesh {
     /**
      *
-     * @param {Object3D} person
+     * @param {Vector3} startPosition
+     * @param {Vector3} direction
      */
-    constructor(person) {
+    constructor(startPosition, direction) {
         super()
 
         /**
          *
-         * @type {Object3D}
+         * @type {Vector3}
          */
-        this.person = person
+        this.direction = direction
+
+        /**
+         *
+         * @type {Vector3}
+         */
+        this.startPosition = startPosition
 
         /**
          *
@@ -25,25 +31,7 @@ class SingleCharge extends Mesh {
          *
          * @type {number}
          */
-        this.maxDistance = 1200
-
-        /**
-         *
-         * @type {Vector3}
-         */
-        this.offset = new Vector3(0, 27, 0)
-
-        /**
-         *
-         * @type {Vector3}
-         */
-        this.direction = new Object3DDirection(person).get()
-
-        /**
-         *
-         * @type {Vector3}
-         */
-        this.startPosition = new Vector3().copy(this.person.position).add(this.offset)
+        this.maxDistance = 1800
 
         /**
          *
@@ -90,8 +78,8 @@ class SingleCharge extends Mesh {
      */
     render() {
         this.position.copy(this.startPosition)
-        this.material = new MeshBasicMaterial({ color: 0x000000 })
-        this.geometry = new SphereBufferGeometry(2, 10, 10)
+        this.material = new MeshBasicMaterial({ color: 0xFFFFFF })
+        this.geometry = new SphereBufferGeometry(1.2, 6, 8)
         return this
     }
 

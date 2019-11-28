@@ -1,7 +1,7 @@
 import Object3DDirection from './Object3DDirection'
 import {Vector3} from 'three'
 
-class Object3DRoller {
+class Object3DRoller extends Vector3 {
     /**
      * Вращение объекта вокруг цели (объекта) на растоянии.
      *
@@ -10,6 +10,7 @@ class Object3DRoller {
      * @param {number|null} [interval]
      */
     constructor(targetObject, rollerObject, interval = null) {
+        super()
         /**
          *
          * @type {Object3D}
@@ -33,12 +34,6 @@ class Object3DRoller {
          * @type {number}
          */
         this.interval = interval || this.rollerObject.position.z
-
-        /**
-         *
-         * @type {Vector3}
-         */
-        this.vector = new Vector3()
     }
 
     /**
@@ -57,7 +52,7 @@ class Object3DRoller {
      */
     update(delta) {
         const directionScalar = this.direction.get().multiplyScalar(- this.interval)
-        const point = this.vector.copy(this.targetObject.position).add(directionScalar)
+        const point = this.copy(this.targetObject.position).add(directionScalar)
         this.rollerObject.position.x = point.x
         this.rollerObject.position.z = point.z
     }

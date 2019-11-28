@@ -4,15 +4,9 @@ import {EventDispatcher} from 'three'
 class PersonShot {
     /**
      *
-     * @param {Object3D} person
      * @param {Scene} scene
      */
-    constructor(person, scene) {
-        /**
-         *
-         * @type {Object3D}
-         */
-        this.person = person
+    constructor(scene) {
 
         /**
          *
@@ -50,12 +44,14 @@ class PersonShot {
 
     /**
      *
+     * @param {Vector3} startPosition
+     * @param {Vector3} direction
      * @param {Array.<Object3D>} intersectObjects
      * @param {boolean} [recursive]
      * @returns {PersonShot}
      */
-    fire(intersectObjects, recursive = false) {
-        const model = new SingleCharge(this.person).render()
+    fire(startPosition, direction, intersectObjects, recursive = false) {
+        const model = new SingleCharge(startPosition, direction).render()
             .destroy(() => this.removeCharge(model))
             .change(() => {
                 const intersections = model.findIntersection(intersectObjects, recursive)

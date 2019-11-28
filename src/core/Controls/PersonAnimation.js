@@ -1,4 +1,5 @@
 import { AnimationMixer, Group } from 'three'
+import PersonControls from './PersonControls'
 
 const ACTION_STOP = 'stop'
 const ACTION_JUMP = 'jump'
@@ -113,6 +114,24 @@ class PersonAnimation extends Group {
             this.actionName = ACTION_JUMP
         }
         return this
+    }
+
+    toggle(actionName) {
+        this.actionName = actionName
+        switch (actionName) {
+            case PersonControls.ACTION_STOP:
+                this.stop()
+                break
+            case PersonControls.ACTION_WALK:
+                this.walk()
+                break
+            case PersonControls.ACTION_RUN:
+                this.run()
+                break
+            case PersonControls.ACTION_JUMP:
+                this.jump()
+                break
+        }
     }
 
     prepareCrossFade(startAction, endAction, duration) {

@@ -66,7 +66,7 @@ class Object3DFollower {
      * @returns {Object3DFollower}
      */
     setTarget(vector) {
-        this.rotationMatrix.lookAt(vector, this.object.position, this.object.up)
+        this.rotationMatrix.lookAt(this.object.position, vector, this.object.up)
         this.targetRotation.setFromRotationMatrix(this.rotationMatrix)
         return this
     }
