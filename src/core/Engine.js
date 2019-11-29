@@ -41,9 +41,9 @@ class Engine {
 
     /**
      *
-     * @type {Array.<{update: Function}>}
+     * @type {Array.<{callback: Function, controlId: string}>}
      */
-    this.updates = []
+    this.updateContols = []
 
     /**
      *
@@ -329,13 +329,26 @@ class Engine {
     return new PersonControls(gltf)
   }
 
+  addUpdateControls(controlId, callback) {
+    this.updateContols.push({ callback: callback, controlId })
+    return this
+  }
+
+  removeUpdateControls(controlId) {
+    for (let i = 0; i < this.updateContols.length; i++) {
+      if (this.updateContols[i]['controlId'] === controlId) {
+        this.updateContols.splice(i, 1)
+        break
+      }
+    }
+    return this
+  }
+
   addPlayer(playerRoomId, personControls) {
     this.players[playerRoomId] = personControls
     this.scene.add(personControls.person)
-    this.updates.push({
-      update: (delta) => {
-        personControls.update(delta)
-      }
+    this.addUpdateControls(playerRoomId, (delta) => {
+      personControls.update(delta)
     })
 
     personControls.shot.collisionEvent((data) => {
@@ -349,6 +362,21 @@ class Engine {
     personControls.shot.removeChargeEvent((data) => {
       this.scene.remove(data.model)
     })
+  }
+
+  removePlayer(playerRoomId) {
+    const personControls = this.players[playerRoomId]
+    if (!personControls) {
+      return
+    }
+
+    for (const charge of personControls.shot.charges) {
+      this.scene.remove(charge)
+    }
+
+    this.removeUpdateControls(playerRoomId)
+    this.scene.remove(personControls.person)
+    delete this.players[playerRoomId]
   }
 
   static loadSoldierModel() {
@@ -391,8 +419,8 @@ class Engine {
     this.cameraMap.lookAt(this.personControls.person.position)
     this.sky.position.copy(this.personControls.person.position)
 
-    for (const item of this.updates) {
-      item.update(delta)
+    for (const item of this.updateContols) {
+      item.callback(delta)
     }
 
     this.renderer

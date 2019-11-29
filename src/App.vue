@@ -2,7 +2,10 @@
   <div id="app">
     <Logo msg="3D engine"/>
     <div id="instructions">
-      <span style="font-size:36px">Click to play</span>
+      <input id="user-name" name="user-name" placeholder="User name" />
+      <span style="display: none" id="error">User name is not valid. min 4, max 16</span><br/>
+      <button name="play" id="play">Click to play</button>
+
       <br />
       Move: WASD<br/>
       Jump: SPACE<br/>
@@ -107,6 +110,11 @@ export default {
 
             winnerSocket.on('action', (data) => {
               const personControls = engine.players[data.senderRoomId]
+              if (!personControls) {
+                console.log(`Can not find person by roomId: ${data.senderRoomId}`)
+                return
+              }
+
               personControls.person.position.copy(data.position)
               personControls.person.rotation.copy(data.rotation)
               personControls.person.scale.copy(data.scale)
@@ -118,14 +126,31 @@ export default {
               }
             })
 
+            window.addEventListener('beforeunload', (event) => {
+              winnerSocket.emit('close-window', {
+                senderRoomId: userRoomId,
+              })
+            })
+
+            winnerSocket.on('leave', (data) => {
+              engine.removePlayer(data.senderRoomId)
+            })
           })
         })
 
-
-
         this.instructions = document.getElementById('instructions')
-        this.instructions.addEventListener('click', () => {
-          engine.personControls.lock(engine.renderer.domElement)
+        this.btnPlay = document.getElementById('play')
+        this.btnPlay.addEventListener('click', () => {
+          const errorElement = document.getElementById('error')
+          errorElement.style.display = 'none'
+
+          const userNameElement = document.getElementById('user-name')
+          if (userNameElement.value.length > 3 && userNameElement.value.length < 16) {
+            engine.personControls.lock(engine.renderer.domElement)
+            userNameElement.style.display = 'none'
+          } else {
+            errorElement.style.display = 'block'
+          }
         }, false)
 
         engine.personControls.addEventListener('lock', () => {
