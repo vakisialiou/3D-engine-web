@@ -115,7 +115,6 @@ class PersonAnimation extends Group {
   }
 
   toggle(actionName) {
-    this.actionName = actionName
     switch (actionName) {
       case PersonAnimation.ACTION_STOP:
         this.stop()
@@ -130,6 +129,7 @@ class PersonAnimation extends Group {
         this.jump()
         break
     }
+    return this
   }
 
   prepareCrossFade(startAction, endAction, duration) {

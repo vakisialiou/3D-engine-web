@@ -151,23 +151,20 @@ class PersonControls extends EventDispatcher {
 
     /**
      *
-     * @type {string|null|?}
-     */
-    this.actionName = null
-
-    /**
-     *
      * @type {Raycaster}
      */
     this.raycaster = new Raycaster()
+
+    this.actionName = null
   }
 
   /**
    *
    * @param {MouseEvent} event
+   * @param {Vector3} targetPosition
    * @returns {void}
    */
-  onMouseMove(event) {
+  onMouseMove(event, targetPosition) {
     // if (this.isLocked === false) {
     //     return
     // }
@@ -188,7 +185,7 @@ class PersonControls extends EventDispatcher {
     //
     // // Направление пушки персонажа
     // this.gunDirection.copy(cameraTarget).sub(this.gunPosition).normalize()
-    // this.dispatchEvent({ type: 'mouse-move' })
+    //
     //
     // // Проверить пересечение прицела с персонажем. Если прицел находится на персонаже то нужно скрыть прицел.
     // this.raycaster.ray.origin.copy(this.camera.position)
@@ -201,6 +198,9 @@ class PersonControls extends EventDispatcher {
     // } else {
     //     this.dispatchEvent({ type: 'show-target' })
     // }
+
+    this.personFollower.setTarget(targetPosition)
+    this.dispatchEvent({ type: 'mouse-move' })
   }
 
   /**
@@ -369,7 +369,8 @@ class PersonControls extends EventDispatcher {
       canMoveLeft: this.canMoveLeft,
       canRun: this.canRun,
       runSpeed: this.runSpeed,
-      walkSpeed: this.walkSpeed
+      walkSpeed: this.walkSpeed,
+      target: this.personFollower.getTarget()
     }
   }
 
@@ -385,6 +386,11 @@ class PersonControls extends EventDispatcher {
       }
       if (['velocity', 'direction'].includes(property)) {
         this[property].copy(data[property])
+        continue
+      }
+
+      if ('target' === property) {
+        this.personFollower.setTarget(this.personFollower.getTarget().copy(data[property]))
         continue
       }
       this[property] = data[property]
@@ -459,6 +465,8 @@ class PersonControls extends EventDispatcher {
     }
 
     this.shot.update(delta)
+    // Направление пушки персонажа
+    this.gunDirection.copy(this.personFollower.getTarget()).sub(this.gunPosition).normalize()
   }
 
   /**
@@ -467,8 +475,8 @@ class PersonControls extends EventDispatcher {
    * @returns {PersonControls}
    */
   updateTargetPosition(targetPosition) {
-    // Направление пушки персонажа
-    this.gunDirection.copy(targetPosition).sub(this.gunPosition).normalize()
+    // // Направление пушки персонажа
+    // this.gunDirection.copy(targetPosition).sub(this.gunPosition).normalize()
     return this
   }
 }

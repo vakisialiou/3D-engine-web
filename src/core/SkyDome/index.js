@@ -2,9 +2,10 @@ import { fragmentShader, vertexShader } from './shader'
 import { BackSide, Color, Mesh, ShaderMaterial, SphereBufferGeometry } from 'three'
 
 class SkyDome extends Mesh {
-  constructor() {
+  constructor(name) {
     super()
     this.type = SkyDome.name
+    this.name = name
 
     this.geometry = new SphereBufferGeometry(4000, 32, 15)
     this.material = new ShaderMaterial({

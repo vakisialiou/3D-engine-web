@@ -1,61 +1,66 @@
 import Object3DDirection from './Object3DDirection'
 import {Vector3} from 'three'
 
-class Object3DRoller extends Vector3 {
+class Object3DRoller {
+  /**
+   * Вращение объекта вокруг цели (объекта) на растоянии.
+   *
+   * @param {Vector3} targetVector
+   * @param {Object3D} rollerObject
+   * @param {number} interval
+   */
+  constructor(targetVector, rollerObject, interval) {
     /**
-     * Вращение объекта вокруг цели (объекта) на растоянии.
      *
-     * @param {Object3D} targetObject
-     * @param {Object3D} rollerObject
-     * @param {number|null} [interval]
+     * @type {Vector3}
      */
-    constructor(targetObject, rollerObject, interval = null) {
-        super()
-        /**
-         *
-         * @type {Object3D}
-         */
-        this.targetObject = targetObject
-
-        /**
-         *
-         * @type {Object3D}
-         */
-        this.rollerObject = rollerObject
-
-        /**
-         *
-         * @type {Object3DDirection}
-         */
-        this.direction = new Object3DDirection(rollerObject)
-
-        /**
-         *
-         * @type {number}
-         */
-        this.interval = interval || this.rollerObject.position.z
-    }
+    this.vector = new Vector3()
 
     /**
      *
-     * @param {number} value
-     * @returns {Object3DRoller}
+     * @type {Vector3}
      */
-    setInterval(value) {
-        this.interval = value
-        return this
-    }
+    this.targetVector = targetVector
 
     /**
-     * @param {number} delta
-     * @returns {void}
+     *
+     * @type {Object3D}
      */
-    update(delta) {
-        const directionScalar = this.direction.get().multiplyScalar(- this.interval)
-        const point = this.copy(this.targetObject.position).add(directionScalar)
-        this.rollerObject.position.x = point.x
-        this.rollerObject.position.z = point.z
-    }
+    this.rollerObject = rollerObject
+
+    /**
+     *
+     * @type {Object3DDirection}
+     */
+    this.direction = new Object3DDirection(rollerObject)
+
+    /**
+     *
+     * @type {number}
+     */
+    this.interval = interval
+  }
+
+  /**
+   *
+   * @param {number} value
+   * @returns {Object3DRoller}
+   */
+  setInterval(value) {
+    this.interval = value
+    return this
+  }
+
+  /**
+   * @param {number} delta
+   * @returns {void}
+   */
+  update(delta) {
+    const directionScalar = this.direction.get().multiplyScalar(- this.interval)
+    const point = this.vector.copy(this.targetVector).add(directionScalar)
+    this.rollerObject.position.x = point.x
+    this.rollerObject.position.z = point.z
+  }
 }
 
 export default Object3DRoller

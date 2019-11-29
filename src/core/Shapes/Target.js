@@ -1,8 +1,10 @@
-import {Sprite, SpriteMaterial, AdditiveBlending, TextureLoader, Vector3} from 'three'
+import { Sprite, SpriteMaterial, AdditiveBlending } from 'three'
+import TextureLoader from './../Helpers/TextureLoader'
 
 class Target extends Sprite {
-  constructor(props) {
-    super(props)
+  constructor(name) {
+    super()
+    this.name = name
   }
 
   /**
@@ -38,17 +40,26 @@ class Target extends Sprite {
   /**
    *
    * @param {string} path
-   * @returns {Target}
+   * @returns {Promise}
    */
-  load(path) {
+  async load(path) {
     this.material = new SpriteMaterial({
       depthTest: false,
       depthWrite: false,
       blending: AdditiveBlending,
-      map: new TextureLoader().load(path),
+      map: await TextureLoader.load(path),
       transparent: true,
       opacity: 0
     })
+  }
+
+  /**
+   *
+   * @param {Vector3} position
+   * @returns {Target}
+   */
+  update(position) {
+    this.position.copy(position)
     return this
   }
 }

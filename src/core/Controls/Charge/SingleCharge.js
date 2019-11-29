@@ -31,7 +31,7 @@ class SingleCharge extends Mesh {
      *
      * @type {number}
      */
-    this.speed = 1200
+    this.speed = 500
 
     /**
      *

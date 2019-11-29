@@ -1,17 +1,21 @@
 import {
   MirroredRepeatWrapping,
   RepeatWrapping,
-  BoxBufferGeometry,
   BoxGeometry,
   PlaneBufferGeometry,
   MeshBasicMaterial,
-  TextureLoader,
   Mesh
 } from 'three'
+import TextureLoader from './TextureLoader'
 
 class Shape extends Mesh {
-  constructor() {
+  /**
+   *
+   * @param {string|?} name
+   */
+  constructor(name = null) {
     super()
+    this.name = name
   }
 
   /**
@@ -30,10 +34,10 @@ class Shape extends Mesh {
    * @param {Number} [repeatX]
    * @param {Number} [repeatY]
    * @param {boolean} [mirrored]
-   * @returns {Shape}
+   * @returns {Promise}
    */
-  setTextureMaterial(path, repeatX = 1, repeatY = 1, mirrored = false) {
-    const texture = new TextureLoader().load(path)
+  async setTextureMaterial(path, repeatX = 1, repeatY = 1, mirrored = false) {
+    const texture = await TextureLoader.load(path)
     if (mirrored) {
       texture.wrapT = MirroredRepeatWrapping
       texture.wrapS = MirroredRepeatWrapping
@@ -44,7 +48,6 @@ class Shape extends Mesh {
     texture.repeat.set(repeatX, repeatY)
     this.material = new MeshBasicMaterial({ map: texture })
     this.material.needsUpdate = true
-    return this
   }
 
   /**

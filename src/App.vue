@@ -25,13 +25,13 @@ export default {
 
     Engine.loadSoldierModel().then((gltf) => {
       const engine = new Engine(gltf)
-      engine.registerEvents()
-      engine.initGraph(this.$el).animate()
+      engine.prepare().then(() => {
+        engine
+          .setLight()
+          .registerEvents()
+        engine.initGraph(this.$el).animate()
 
-
-
-
-        const winnerSocket = io('http://localhost:5001/winner');
+        const winnerSocket = io('http://192.168.1.145:5001/winner');
         winnerSocket.on('connect', () => {
           winnerSocket.on('handshake', (handshakeData) => {
             const userRoomId = handshakeData.userRoomId
@@ -49,14 +49,13 @@ export default {
             // Все кто в игре добавляют нового игрока себе на сцену.
             winnerSocket.on('new-user', (data) => {
               // Добавить нового игрока на сцену
-              engine.loadOtherPlayer().then((personControls) => {
+              engine.loadPlayer().then((personControls) => {
                 personControls.person.position.copy(data.position)
                 personControls.person.rotation.copy(data.rotation)
                 personControls.person.scale.copy(data.scale)
                 personControls.setActionData(data.actionData)
                 personControls.person.toggle(data.actionName)
-                engine.addPlayerToScene(personControls)
-                engine.players[data.senderRoomId] = personControls
+                engine.addPlayer(data.senderRoomId, personControls)
               })
 
 
@@ -74,14 +73,13 @@ export default {
 
             winnerSocket.on('old-user', (data) => {
               // Новый игрок добавляет к себе на сцену старых игроков. (тех кто уже давно на сцене)
-              engine.loadOtherPlayer().then((personControls) => {
+              engine.loadPlayer().then((personControls) => {
                 personControls.person.position.copy(data.position)
                 personControls.person.rotation.copy(data.rotation)
                 personControls.person.scale.copy(data.scale)
                 personControls.setActionData(data.actionData)
                 personControls.person.toggle(data.actionName)
-                engine.addPlayerToScene(personControls)
-                engine.players[data.senderRoomId] = personControls
+                engine.addPlayer(data.senderRoomId, personControls)
               })
             })
 
@@ -114,6 +112,10 @@ export default {
               personControls.person.scale.copy(data.scale)
               personControls.setActionData(data.actionData)
               personControls.person.toggle(data.actionName)
+              if (data.actionName === 'shot') {
+                const intersectionObjects = engine.getIntersectionObjects()
+                personControls.shot.fire(personControls.gunPosition.clone(), personControls.gunDirection.clone(), intersectionObjects)
+              }
             })
 
           })
@@ -122,18 +124,19 @@ export default {
 
 
         this.instructions = document.getElementById('instructions')
-          this.instructions.addEventListener('click', () => {
-              engine.personControls.lock(engine.renderer.domElement)
-          }, false)
+        this.instructions.addEventListener('click', () => {
+          engine.personControls.lock(engine.renderer.domElement)
+        }, false)
 
-          engine.personControls.addEventListener('lock', () => {
-              this.instructions.style.display = 'none'
+        engine.personControls.addEventListener('lock', () => {
+          this.instructions.style.display = 'none'
 
-          })
-          engine.personControls.addEventListener('unlock', () => {
-              this.instructions.style.display = ''
-          })
+        })
+        engine.personControls.addEventListener('unlock', () => {
+          this.instructions.style.display = ''
+        })
       })
+    })
   }
 }
 </script>
