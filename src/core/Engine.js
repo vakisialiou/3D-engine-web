@@ -22,6 +22,7 @@ import Object3DStep from './Helpers/Object3DStep'
 import CameraFollower from './Helpers/CameraFollower'
 import Object3DRoller from './Helpers/Object3DRoller'
 import PersonAnimation from './Controls/PersonAnimation'
+import CSS3DSprite from './CSSRenderer/CSS3DSprite'
 
 const gui = new GUI();
 
@@ -35,7 +36,7 @@ class Engine {
 
     /**
      *
-     * @type {{ [playerRoomId]: PersonControls }}
+     * @type {{ [userId]: PersonControls }}
      */
     this.players = {}
 
@@ -43,7 +44,7 @@ class Engine {
      *
      * @type {Array.<{callback: Function, controlId: string}>}
      */
-    this.updateContols = []
+    this.contols = []
 
     /**
      *
@@ -263,7 +264,7 @@ class Engine {
     })
 
     this.personControls.shot.collisionEvent((data) => {
-      this.scene.remove(data.model)
+      this.removeModel(data.model)
     })
 
     this.personControls.shot.addChargeEvent((data) => {
@@ -271,9 +272,20 @@ class Engine {
     })
 
     this.personControls.shot.removeChargeEvent((data) => {
-      this.scene.remove(data.model)
+      this.removeModel(data.model)
     })
 
+    return this
+  }
+
+  removeModel(model) {
+    for (const children of model.children) {
+      if (children instanceof CSS3DSprite) {
+        model.remove(children)
+        break
+      }
+    }
+    this.scene.remove(model)
     return this
   }
 
@@ -314,9 +326,19 @@ class Engine {
           .setPositionX((i * 250) - 100)
           .setPositionZ(a * 250)
           .cube(50)
+
+        const divElement = document.createElement('div')
+        divElement.className = 'label'
+        divElement.textContent = `Label CSS3DSprite ${i} - ${a}`
+        const label = new CSS3DSprite(divElement)
+        label.scale.set(0.2, 0.2, 0.2)
+        label.position.set(0, 30, 0)
+        shape.add(label)
         this.scene.add(shape)
       }
     }
+
+    this.renderer.prepareCSS3DRenderer().enableCSS3D()
   }
 
   unregisterEvents() {
@@ -329,30 +351,30 @@ class Engine {
     return new PersonControls(gltf)
   }
 
-  addUpdateControls(controlId, callback) {
-    this.updateContols.push({ callback: callback, controlId })
+  addControls(controlId, callback) {
+    this.contols.push({ callback: callback, controlId })
     return this
   }
 
-  removeUpdateControls(controlId) {
-    for (let i = 0; i < this.updateContols.length; i++) {
-      if (this.updateContols[i]['controlId'] === controlId) {
-        this.updateContols.splice(i, 1)
+  removeControls(controlId) {
+    for (let i = 0; i < this.contols.length; i++) {
+      if (this.contols[i]['controlId'] === controlId) {
+        this.contols.splice(i, 1)
         break
       }
     }
     return this
   }
 
-  addPlayer(playerRoomId, personControls) {
-    this.players[playerRoomId] = personControls
+  addPlayer(userId, personControls) {
+    this.players[userId] = personControls
     this.scene.add(personControls.person)
-    this.addUpdateControls(playerRoomId, (delta) => {
+    this.addControls(userId, (delta) => {
       personControls.update(delta)
     })
 
     personControls.shot.collisionEvent((data) => {
-      this.scene.remove(data.model)
+      this.removeModel(data.model)
     })
 
     personControls.shot.addChargeEvent((data) => {
@@ -360,12 +382,20 @@ class Engine {
     })
 
     personControls.shot.removeChargeEvent((data) => {
-      this.scene.remove(data.model)
+      this.removeModel(data.model)
     })
+
+    const divElement = document.createElement('div')
+    divElement.className = 'label'
+    divElement.textContent = personControls.person.userData.userName
+    const label = new CSS3DSprite(divElement)
+    label.scale.set(0.2, 0.2, 0.2)
+    label.position.set(0, 40, 0)
+    personControls.person.add(label)
   }
 
-  removePlayer(playerRoomId) {
-    const personControls = this.players[playerRoomId]
+  removePlayer(userId) {
+    const personControls = this.players[userId]
     if (!personControls) {
       return
     }
@@ -374,11 +404,15 @@ class Engine {
       this.scene.remove(charge)
     }
 
-    this.removeUpdateControls(playerRoomId)
-    this.scene.remove(personControls.person)
-    delete this.players[playerRoomId]
+    this.removeControls(userId)
+    this.removeModel(personControls.person)
+    delete this.players[userId]
   }
 
+  /**
+   *
+   * @returns {Promise<Object3D|Object>}
+   */
   static loadSoldierModel() {
     return new Promise((resolve) => {
       const loader = new GLTFLoader()
@@ -419,12 +453,13 @@ class Engine {
     this.cameraMap.lookAt(this.personControls.person.position)
     this.sky.position.copy(this.personControls.person.position)
 
-    for (const item of this.updateContols) {
-      item.callback(delta)
+    for (const contol of this.contols) {
+      contol.callback(delta)
     }
 
     this.renderer
       .setWindowSize(window.innerWidth, window.innerHeight)
+      .cssRendererUpdate(this.scene, this.camera)
       .update(this.scene, this.camera)
 
     this.renderer

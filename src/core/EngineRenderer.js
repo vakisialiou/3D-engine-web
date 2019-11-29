@@ -1,4 +1,6 @@
 import {Color, Vector2, WebGLRenderer} from 'three'
+import CSS2DRenderer from './CSSRenderer/CSS2DRenderer'
+import CSS3DRenderer from './CSSRenderer/CSS3DRenderer'
 
 class EngineRenderer extends WebGLRenderer {
   /**
@@ -29,9 +31,27 @@ class EngineRenderer extends WebGLRenderer {
 
     /**
      *
+     * @type {CSS2DRenderer}
+     */
+    this.css2DRenderer = new CSS2DRenderer()
+
+    /**
+     *
+     * @type {CSS3DRenderer}
+     */
+    this.css3DRenderer = new CSS3DRenderer()
+
+    /**
+     *
      * @type {{active: boolean, resize: Function|null}}
      */
     this.eventListeners = { active: false, resize: null }
+
+    /**
+     *
+     * @type {{enable2D: boolean, enable3D: boolean}}
+     */
+    this.cssRenderer = { enable2D: false, enable3D: false }
   }
 
   /**
@@ -80,7 +100,7 @@ class EngineRenderer extends WebGLRenderer {
    *
    * @param {Scene} scene
    * @param {PerspectiveCamera} camera
-   * @returns {void}
+   * @returns {EngineRenderer}
    */
   update(scene, camera) {
     const left = Math.floor(this.windowMargin.x)
@@ -94,7 +114,25 @@ class EngineRenderer extends WebGLRenderer {
 
     camera.aspect = width / height
     camera.updateProjectionMatrix()
+
     this.render(scene, camera)
+    return this
+  }
+
+  /**
+   *
+   * @param {Scene} scene
+   * @param {PerspectiveCamera} camera
+   * @returns {EngineRenderer}
+   */
+  cssRendererUpdate(scene, camera) {
+    if (this.cssRenderer.enable2D) {
+      this.css2DRenderer.render(scene, camera)
+    }
+    if (this.cssRenderer.enable3D) {
+      this.css3DRenderer.render(scene, camera)
+    }
+    return this
   }
 
   /**
@@ -106,6 +144,8 @@ class EngineRenderer extends WebGLRenderer {
     camera.aspect = this.width / this.height
     camera.updateProjectionMatrix()
     this.setSize(this.width, this.height)
+    this.css2DRenderer.setSize(this.width, this.height)
+    this.css3DRenderer.setSize(this.width, this.height)
   }
 
   /**
@@ -133,6 +173,48 @@ class EngineRenderer extends WebGLRenderer {
       this.eventListeners.resize = null
       window.removeEventListener('resize', this.eventListeners.resize, false )
     }
+    return this
+  }
+
+  /**
+   *
+   * @returns {EngineRenderer}
+   */
+  enableCSS2D() {
+    this.cssRenderer.enable2D = true
+    return this
+  }
+
+  /**
+   *
+   * @returns {EngineRenderer}
+   */
+  enableCSS3D() {
+    this.cssRenderer.enable3D = true
+    return this
+  }
+
+  /**
+   *
+   * @returns {EngineRenderer}
+   */
+  prepareCSS2DRenderer() {
+    this.css2DRenderer.setSize(this.width, this.height)
+    this.css2DRenderer.domElement.style.position = 'absolute'
+    this.css2DRenderer.domElement.style.top = 0
+    document.body.appendChild(this.css2DRenderer.domElement)
+    return this
+  }
+
+  /**
+   *
+   * @returns {EngineRenderer}
+   */
+  prepareCSS3DRenderer() {
+    this.css3DRenderer.setSize(this.width, this.height)
+    this.css3DRenderer.domElement.style.position = 'absolute'
+    this.css3DRenderer.domElement.style.top = 0
+    document.body.appendChild(this.css3DRenderer.domElement)
     return this
   }
 }
