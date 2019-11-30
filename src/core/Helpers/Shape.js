@@ -7,6 +7,7 @@ import {
   Mesh
 } from 'three'
 import TextureLoader from './TextureLoader'
+import UserData from './../Store/UserData'
 
 class Shape extends Mesh {
   /**
@@ -16,6 +17,12 @@ class Shape extends Mesh {
   constructor(name = null) {
     super()
     this.name = name
+
+    /**
+     *
+     * @type {UserData}
+     */
+    this.userData = new UserData()
   }
 
   /**

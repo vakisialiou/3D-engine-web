@@ -8,7 +8,8 @@ import {
   PerspectiveCamera,
   DirectionalLightHelper,
   PointLight,
-  PointLightHelper
+  PointLightHelper,
+  SkinnedMesh
 } from 'three'
 import SkyDome from './SkyDome'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
@@ -258,13 +259,19 @@ class Engine {
           break
         case PersonAnimation.ACTION_SHOT:
           const intersectionObjects = this.getIntersectionObjects()
-          this.personControls.shot.fire(this.personControls.gunPosition.clone(), this.personControls.gunDirection.clone(), intersectionObjects)
+          this.personControls.shot.fire(this.personControls.gunPosition.clone(), this.personControls.gunDirection.clone(), intersectionObjects, true)
           break
       }
     })
 
     this.personControls.shot.collisionEvent((data) => {
-      this.removeModel(data.model)
+      if (data.model instanceof SkinnedMesh) {
+        // model = model.parent.parent
+        // console.log(model)
+        // this.removePlayer()
+      } else {
+        this.removeModel(data.model)
+      }
     })
 
     this.personControls.shot.addChargeEvent((data) => {
@@ -294,7 +301,12 @@ class Engine {
       if (['Ground'].includes(object.name)) {
         return false
       }
-      return object instanceof Shape
+
+      if (object instanceof Shape) {
+        return true
+      }
+
+      return object instanceof PersonAnimation && object.uuid !== this.personControls.person.uuid
     })
   }
 
@@ -327,9 +339,11 @@ class Engine {
           .setPositionZ(a * 250)
           .cube(50)
 
+        shape.userData.setName(`Cube ${i} - ${a}`)
+
         const divElement = document.createElement('div')
         divElement.className = 'label'
-        divElement.textContent = `Label CSS3DSprite ${i} - ${a}`
+        divElement.textContent = `${shape.userData.name}: ${shape.userData.health}%`
         const label = new CSS3DSprite(divElement)
         label.scale.set(0.2, 0.2, 0.2)
         label.position.set(0, 30, 0)
@@ -387,7 +401,7 @@ class Engine {
 
     const divElement = document.createElement('div')
     divElement.className = 'label'
-    divElement.textContent = personControls.person.userData.userName
+    divElement.textContent = `${personControls.userData.name}: ${personControls.userData.health}%`
     const label = new CSS3DSprite(divElement)
     label.scale.set(0.2, 0.2, 0.2)
     label.position.set(0, 40, 0)

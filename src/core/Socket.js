@@ -25,13 +25,14 @@ class Socket {
     }
   }
 
-  connect(userData) {
+  connect() {
     const winnerSocket = io('http://localhost:5001/winner')
     winnerSocket.on('connect', () => {
+      this.engine.personControls.userData.setUserId(this.userId)
       // Сказать всем что я зашел в игру и вот мои координаты.
       winnerSocket.emit('come-in', {
         senderUserId: this.userId,
-        userData: { userName: userData.userName },
+        userData: this.engine.personControls.userData,
         actionName: this.engine.personControls.person.actionName,
         position: this.engine.personControls.person.position,
         rotation: this.engine.personControls.person.rotation,
@@ -48,14 +49,14 @@ class Socket {
           personControls.person.scale.copy(data.scale)
           personControls.setActionData(data.actionData)
           personControls.person.toggle(data.actionName)
-          personControls.person.userData = data.userData
+          personControls.userData.copy(data.userData)
           this.engine.addPlayer(data.senderUserId, personControls)
         })
 
         // Сказать новому игроку что я тут в игре уже давно и вот мои координаты.
         winnerSocket.emit('share-info', {
           senderUserId: this.userId,
-          userData: { userName: userData.userName },
+          userData: this.engine.personControls.userData,
           receiverUserId: data.senderUserId,
           actionName: this.engine.personControls.person.actionName,
           position: this.engine.personControls.person.position,
@@ -73,7 +74,7 @@ class Socket {
           personControls.person.scale.copy(data.scale)
           personControls.setActionData(data.actionData)
           personControls.person.toggle(data.actionName)
-          personControls.person.userData = data.userData
+          personControls.userData.copy(data.userData)
           this.engine.addPlayer(data.senderUserId, personControls)
         })
       })
@@ -114,7 +115,7 @@ class Socket {
         personControls.person.toggle(data.actionName)
         if (data.actionName === 'shot') {
           const intersectionObjects = this.engine.getIntersectionObjects()
-          personControls.shot.fire(personControls.gunPosition.clone(), personControls.gunDirection.clone(), intersectionObjects)
+          personControls.shot.fire(personControls.gunPosition.clone(), personControls.gunDirection.clone(), intersectionObjects, true)
         }
       })
 

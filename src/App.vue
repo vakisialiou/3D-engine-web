@@ -18,7 +18,6 @@
 import Engine from './core/Engine'
 import Logo from './components/Logo.vue'
 import Socket from './core/Socket'
-import uuid from 'uuid/v4'
 
 export default {
   name: 'app',
@@ -50,9 +49,10 @@ export default {
 
           const userNameElement = document.getElementById('user-name')
           if (userNameElement.value.length > 3 && userNameElement.value.length < 56) {
-            socket.connect({ userName: userNameElement.value })
+            engine.personControls.userData.setName(userNameElement.value)
             engine.personControls.lock(engine.renderer.domElement)
             userNameElement.style.display = 'none'
+            socket.connect()
             isStarted = true
           } else {
             errorElement.style.display = 'block'

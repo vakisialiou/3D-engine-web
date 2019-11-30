@@ -3,6 +3,7 @@ import Object3DPusher from './../Helpers/Object3DPusher'
 import { EventDispatcher, Vector3, Raycaster } from 'three'
 import PersonAnimation from './PersonAnimation'
 import PersonShot from './PersonShot'
+import UserData from './../Store/UserData'
 
 class PersonControls extends EventDispatcher {
   /**
@@ -11,6 +12,12 @@ class PersonControls extends EventDispatcher {
    */
   constructor(model) {
     super()
+
+    /**
+     *
+     * @type {UserData}
+     */
+    this.userData = new UserData()
 
     this.walkSpeed = 400.0
     this.runSpeed = 800.0
@@ -28,6 +35,7 @@ class PersonControls extends EventDispatcher {
      */
     this.person = new PersonAnimation(model)
     this.person.setDefaultAction()
+    this.person.relation = this
 
     /**
      *
